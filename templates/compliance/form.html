@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}<a href="{% url 'compliance:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <div class="grid grid-main">
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Requirement Details</span></div>
+        <div class="card-body">
+          <div class="form-group"><label class="form-label">Title *</label>{{ form.title }}{% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}</div>
+          <div class="grid grid-2" style="gap:16px">
+            <div class="form-group"><label class="form-label">Reference</label>{{ form.reference }}</div>
+            <div class="form-group"><label class="form-label">Category</label>{{ form.category }}</div>
+            <div class="form-group"><label class="form-label">Status</label>{{ form.status }}</div>
+            <div class="form-group"><label class="form-label">Owner</label>{{ form.owner }}</div>
+            <div class="form-group"><label class="form-label">Review Date</label>{{ form.review_date }}</div>
+            <div class="form-group"><label class="form-label">Active</label>{{ form.is_active }}</div>
+          </div>
+          <div class="form-group"><label class="form-label">Applicable To</label>{{ form.applicable_to }}</div>
+          <div class="form-group"><label class="form-label">Description</label>{{ form.description }}</div>
+          <div class="form-group"><label class="form-label">Notes</label>{{ form.notes }}</div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+      <a href="{% url 'compliance:list' %}" class="btn btn-ghost" style="margin-left:8px">Cancel</a>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-body">
+          <p class="text-muted fs-12">Compliance requirements track laws, regulations, standards and policies your organisation must comply with.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

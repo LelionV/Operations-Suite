@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Order — {{ proc_order.purchase_order.po_number }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'procurement:dashboard' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {{ proc_order.purchase_order.po_number }}
+{% endblock %}
+{% block topbar_actions %}
+  {% if proc_order.status == 'OPEN' %}
+    <a href="{% url 'procurement:edit_order' proc_order.pk %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-pencil"></i> Edit
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-main">
+  <div>
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="fw-600" style="font-size:15px">{{ proc_order.purchase_order.title }}</div>
+          <div class="text-muted fs-12 mt-4">
+            {{ proc_order.purchase_order.department }}
+            &nbsp;·&nbsp; {{ proc_order.purchase_order.requester.get_full_name }}
+          </div>
+        </div>
+        {% if proc_order.status == 'ORDERED' %}
+          <span class="badge badge-ordered"><i class="bi bi-cart-check"></i> Ordered</span>
+        {% else %}
+          <span class="badge badge-proc"><i class="bi bi-hourglass-split"></i> Open</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if proc_order.supplier_name or proc_order.order_reference or proc_order.expected_delivery %}
+    <div class="card mb-16">
+      <div class="card-header"><span class="card-title">Supplier</span></div>
+      <div class="card-body">
+        <div class="grid grid-3" style="gap:16px">
+          {% if proc_order.supplier_name %}
+          <div><div class="fs-12 text-muted fw-600 mb-4">Supplier</div><div class="fw-600">{{ proc_order.supplier_name }}</div></div>
+          {% endif %}
+          {% if proc_order.supplier_contact %}
+          <div><div class="fs-12 text-muted fw-600 mb-4">Contact</div><div>{{ proc_order.supplier_contact }}</div></div>
+          {% endif %}
+          {% if proc_order.supplier_email %}
+          <div><div class="fs-12 text-muted fw-600 mb-4">Email</div><div>{{ proc_order.supplier_email }}</div></div>
+          {% endif %}
+          {% if proc_order.order_reference %}
+          <div><div class="fs-12 text-muted fw-600 mb-4">Reference</div><div class="code">{{ proc_order.order_reference }}</div></div>
+          {% endif %}
+          {% if proc_order.expected_delivery %}
+          <div><div class="fs-12 text-muted fw-600 mb-4">Expected Delivery</div><div>{{ proc_order.expected_delivery|date:"d M Y" }}</div></div>
+          {% endif %}
+          {% if proc_order.ordered_at %}
+          <div><div class="fs-12 text-muted fw-600 mb-4">Ordered At</div><div class="text-muted fs-12">{{ proc_order.ordered_at|date:"d M Y H:i" }}</div></div>
+          {% endif %}
+        </div>
+        {% if proc_order.notes %}<p class="text-muted fs-12 mt-16 mb-0">{{ proc_order.notes }}</p>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Line Items</span></div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr><th>Code</th><th>Description</th><th class="center">Qty</th><th>UOM</th>
+                <th class="num">Unit Price</th><th class="num">Total</th></tr>
+          </thead>
+          <tbody>
+            {% for line in proc_order.proc_line_items.all %}
+            <tr>
+              <td><span class="code">{{ line.code }}</span></td>
+              <td class="fw-600">{{ line.description }}</td>
+              <td class="center">{{ line.quantity }}</td>
+              <td class="text-muted fs-12">{{ line.uom }}</td>
+              <td class="num text-muted fs-12">{{ line.unit_price|floatformat:2 }}</td>
+              <td class="num fw-600">{{ line.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc">
+              <td colspan="5" style="text-align:right;font-weight:600;padding:12px 14px;font-size:13px">Total</td>
+              <td class="num fw-700" style="padding:12px 14px">{{ proc_order.purchase_order.total_amount|floatformat:2 }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card mb-16">
+      <div class="card-header"><span class="card-title">Status</span></div>
+      <div class="card-body">
+        {% if proc_order.status == 'ORDERED' %}
+          <span class="badge badge-ordered fs-13"><i class="bi bi-cart-check"></i> Ordered — Sent to Stores</span>
+          <div class="text-muted fs-12 mt-8">{{ proc_order.ordered_at|date:"d M Y H:i" }}</div>
+        {% else %}
+          <span class="badge badge-proc fs-13">Open — Not Yet Ordered</span>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if proc_order.status == 'OPEN' %}
+    <div class="action-panel success">
+      <div class="action-panel-header"><i class="bi bi-cart-check"></i> Mark as Ordered</div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-12">
+          Confirm the order has been placed. The PO will move to <strong>Ordered</strong>
+          status and the stores team will be notified to receive the goods.
+        </p>
+        <form method="post" action="{% url 'procurement:mark_ordered' proc_order.pk %}"
+              onsubmit="return confirm('Mark this order as ordered and send to stores?')">
+          {% csrf_token %}
+          <button class="btn btn-success btn-block">
+            <i class="bi bi-cart-check"></i> Mark as Ordered → Send to Stores
+          </button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="card" style="border-color:var(--accent-light)">
+      <div class="card-body" style="background:var(--accent-light);border-radius:var(--radius-lg);text-align:center">
+        <i class="bi bi-check-circle" style="font-size:28px;color:var(--accent)"></i>
+        <div class="fw-600 mt-8" style="color:var(--accent)">Order placed</div>
+        <div class="text-muted fs-12 mt-4">Stores have been notified to receive the goods.</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

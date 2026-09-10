@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'purchase_orders:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {{ page_title }}
+{% endblock %}
+
+{% block content %}
+<div class="alert alert-info mb-16">
+  <i class="bi bi-person-circle"></i>
+  <span>
+    Department: <strong>{{ request.user.department|default:"Not assigned" }}</strong>
+    &nbsp;·&nbsp; Requester: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+  </span>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="po-form">
+  {% csrf_token %}
+  <div class="grid grid-main">
+    <div>
+      <!-- Header -->
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Purchase Order Details</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Title <span class="req">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="form-error">{{ form.title.errors }}</div>{% endif %}
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Description <span class="text-muted" style="font-weight:400">(optional)</span></label>
+            {{ form.description }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Line Items -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Line Items</span>
+          <button type="button" class="btn btn-outline btn-sm" id="add-line-btn">
+            <i class="bi bi-plus-lg"></i> Add Item
+          </button>
+        </div>
+        <div class="card-body" id="formset-body">
+          {{ formset.management_form }}
+          {% for item_form in formset %}
+          <div class="line-row {% if item_form.instance.pk and item_form.instance.is_rejected %}rejected-row{% endif %}" id="line-{{ forloop.counter0 }}">
+            <div class="line-row-header">
+              <span class="line-row-num">Item #<span class="item-num">{{ forloop.counter }}</span></span>
+              <div style="display:flex;align-items:center;gap:12px">
+                {% if item_form.instance.pk and item_form.instance.is_rejected %}
+                  <span class="badge badge-rejected">Rejected</span>
+                {% endif %}
+                {% if formset.can_delete %}
+                  <label style="font-size:12px;color:var(--danger);cursor:pointer;display:flex;align-items:center;gap:4px">
+                    {{ item_form.DELETE }} Remove
+                  </label>
+                {% endif %}
+              </div>
+            </div>
+            {{ item_form.id }}{{ item_form.qb_item_id }}
+            <div class="grid grid-3" style="gap:12px;margin-bottom:12px">
+              <div style="grid-column:span 1" class="qb-wrap">
+                <label class="form-label">Item Code <span class="req">*</span></label>
+                {{ item_form.code }}
+                <div class="qb-dropdown"></div>
+              </div>
+              <div style="grid-column:span 1">
+                <label class="form-label">Description</label>
+                {{ item_form.description }}
+              </div>
+              <div>
+                <label class="form-label">UOM</label>
+                {{ item_form.uom }}
+              </div>
+            </div>
+            <div class="grid grid-3" style="gap:12px;margin-bottom:12px">
+              <div>
+                <label class="form-label">Quantity <span class="req">*</span></label>
+                {{ item_form.quantity }}
+              </div>
+              <div>
+                <label class="form-label">Lead Time</label>
+                {{ item_form.lead_time }}
+              </div>
+              <div>
+                <label class="form-label">Photo</label>
+                {{ item_form.photo }}
+              </div>
+            </div>
+            <div class="grid grid-2" style="gap:12px">
+              <div>
+                <label class="form-label">Specification <span class="text-muted" style="font-weight:400">(optional)</span></label>
+                {{ item_form.spec }}
+              </div>
+              <div>
+                <label class="form-label">Purpose <span class="text-muted" style="font-weight:400">(optional)</span></label>
+                {{ item_form.purpose }}
+              </div>
+            </div>
+            {% if item_form.errors %}
+              <div class="alert alert-danger mt-8" style="padding:8px 12px;font-size:12px">
+                {% for field, errs in item_form.errors.items %}{{ errs }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Save</span></div>
+        <div class="card-body">
+          <p class="text-muted fs-12 mb-16">Department and requester are set automatically from your account. Save as draft then submit when ready.</p>
+          <button type="submit" class="btn btn-primary btn-block mb-8">
+            <i class="bi bi-save"></i> Save Draft
+          </button>
+          <a href="{% url 'purchase_orders:list' %}" class="btn btn-ghost btn-block">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<template id="empty-line">
+  <div class="line-row">
+    <div class="line-row-header">
+      <span class="line-row-num">Item #<span class="item-num"></span></span>
+      <label style="font-size:12px;color:var(--danger);cursor:pointer;display:flex;align-items:center;gap:4px">
+        <input type="checkbox" name="line_items-__prefix__-DELETE"> Remove
+      </label>
+    </div>
+    <input type="hidden" name="line_items-__prefix__-id">
+    <input type="hidden" name="line_items-__prefix__-qb_item_id">
+    <div class="grid grid-3" style="gap:12px;margin-bottom:12px">
+      <div class="qb-wrap">
+        <label class="form-label">Item Code <span class="req">*</span></label>
+        <input type="text" name="line_items-__prefix__-code" class="form-control qb-code-input" placeholder="Type to search QB items…" autocomplete="off">
+        <div class="qb-dropdown"></div>
+      </div>
+      <div>
+        <label class="form-label">Description</label>
+        <input type="text" name="line_items-__prefix__-description" class="form-control" readonly placeholder="Auto-filled">
+      </div>
+      <div>
+        <label class="form-label">UOM</label>
+        <input type="text" name="line_items-__prefix__-uom" class="form-control" readonly placeholder="UOM">
+      </div>
+    </div>
+    <div class="grid grid-3" style="gap:12px;margin-bottom:12px">
+      <div>
+        <label class="form-label">Quantity <span class="req">*</span></label>
+        <input type="number" name="line_items-__prefix__-quantity" class="form-control" min="1" value="1">
+      </div>
+      <div>
+        <label class="form-label">Lead Time</label>
+        <input type="text" name="line_items-__prefix__-lead_time" class="form-control" placeholder="e.g. 3 days">
+      </div>
+      <div>
+        <label class="form-label">Photo</label>
+        <input type="file" name="line_items-__prefix__-photo" class="form-control" accept="image/*">
+      </div>
+    </div>
+    <div class="grid grid-2" style="gap:12px">
+      <div>
+        <label class="form-label">Specification</label>
+        <textarea name="line_items-__prefix__-spec" class="form-control" rows="2" placeholder="Optional specification…"></textarea>
+      </div>
+      <div>
+        <label class="form-label">Purpose</label>
+        <textarea name="line_items-__prefix__-purpose" class="form-control" rows="2" placeholder="Why is this needed?"></textarea>
+      </div>
+    </div>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SEARCH_URL = "{% url 'inventory:item_search' %}";
+const totalForms = document.getElementById('id_line_items-TOTAL_FORMS');
+
+function initSearch(block) {
+  const codeInput = block.querySelector('.qb-code-input, [name$="-code"]');
+  const dropdown  = block.querySelector('.qb-dropdown');
+  if (!codeInput || !dropdown) return;
+  let timer;
+  codeInput.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = codeInput.value.trim();
+    if (q.length < 1) { dropdown.style.display = 'none'; return; }
+    timer = setTimeout(() => {
+      fetch(`${SEARCH_URL}?q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(items => {
+          dropdown.innerHTML = '';
+          if (!items.length) { dropdown.style.display = 'none'; return; }
+          items.forEach(item => {
+            const d = document.createElement('div');
+            d.className = 'qb-option';
+            d.innerHTML = `<span class="qb-code">${item.code}</span>${item.name} <span class="qb-uom">[${item.uom}]</span>`;
+            d.addEventListener('mousedown', e => {
+              e.preventDefault();
+              block.querySelector('[name$="-code"]').value        = item.code;
+              block.querySelector('[name$="-description"]').value = item.name;
+              block.querySelector('[name$="-uom"]').value         = item.uom;
+              const hid = block.querySelector('[name$="-qb_item_id"]');
+              if (hid) hid.value = item.id || '';
+              dropdown.style.display = 'none';
+            });
+            dropdown.appendChild(d);
+          });
+          dropdown.style.display = 'block';
+        });
+    }, 200);
+  });
+  document.addEventListener('click', e => {
+    if (!block.contains(e.target)) dropdown.style.display = 'none';
+  });
+}
+
+document.querySelectorAll('.line-row').forEach(initSearch);
+
+document.getElementById('add-line-btn').addEventListener('click', () => {
+  const count = parseInt(totalForms.value);
+  const html  = document.getElementById('empty-line').innerHTML.replace(/__prefix__/g, count);
+  const div   = document.createElement('div');
+  div.innerHTML = html;
+  const block = div.firstElementChild;
+  block.querySelector('.item-num').textContent = count + 1;
+  document.getElementById('formset-body').appendChild(block);
+  totalForms.value = count + 1;
+  initSearch(block);
+});
+</script>
+{% endblock %}

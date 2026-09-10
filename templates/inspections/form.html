@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}<a href="{% url "inspections:list" %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger mb-16"><i class="bi bi-exclamation-circle"></i><span>{{ form.non_field_errors }}</span></div>{% endif %}
+  <div class="grid grid-main">
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Inspections Details</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.inspection_type.label }}</label>
+            {{ form.inspection_type }}
+            {% if form.inspection_type.errors %}<div class="form-error">{{ form.inspection_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.checklist.label }}</label>
+            {{ form.checklist }}
+            {% if form.checklist.errors %}<div class="form-error">{{ form.checklist.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.equipment.label }}</label>
+            {{ form.equipment }}
+            {% if form.equipment.errors %}<div class="form-error">{{ form.equipment.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.department.label }}</label>
+            {{ form.department }}
+            {% if form.department.errors %}<div class="form-error">{{ form.department.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.site.label }}</label>
+            {{ form.site }}
+            {% if form.site.errors %}<div class="form-error">{{ form.site.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.inspector.label }}</label>
+            {{ form.inspector }}
+            {% if form.inspector.errors %}<div class="form-error">{{ form.inspector.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.scheduled_date.label }}</label>
+            {{ form.scheduled_date }}
+            {% if form.scheduled_date.errors %}<div class="form-error">{{ form.scheduled_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.next_inspection_date.label }}</label>
+            {{ form.next_inspection_date }}
+            {% if form.next_inspection_date.errors %}<div class="form-error">{{ form.next_inspection_date.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+      <a href="{% url "inspections:list" %}" class="btn btn-ghost" style="margin-left:8px">Cancel</a>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Additional Fields</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="form-error">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.summary.label }}</label>
+            {{ form.summary }}
+            {% if form.summary.errors %}<div class="form-error">{{ form.summary.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.defects_found.label }}</label>
+            {{ form.defects_found }}
+            {% if form.defects_found.errors %}<div class="form-error">{{ form.defects_found.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

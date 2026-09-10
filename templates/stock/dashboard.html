@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Stock Dashboard{% endblock %}
+{% block topbar_title %}Stock Dashboard{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'stock:report' %}" class="btn btn-outline btn-sm"><i class="bi bi-download"></i> Download Report</a>
+  <a href="{% url 'stock:upload' %}" class="btn btn-primary btn-sm"><i class="bi bi-upload"></i> Upload Stock</a>
+{% endblock %}
+{% block content %}
+{% if last_upload %}
+<div class="alert alert-info" style="padding:8px 14px">
+  <i class="bi bi-clock-history"></i>
+  <span class="fs-12">Last upload: <strong>{{ last_upload.filename }}</strong> by {{ last_upload.uploaded_by.get_full_name }} on {{ last_upload.uploaded_at|date:"d M Y H:i" }} · {{ total }} items</span>
+</div>
+{% endif %}
+<div class="grid grid-4 mb-24" style="gap:14px">
+  <div class="stat-card" style="border-left:4px solid var(--danger)">
+    <div class="stat-icon" style="background:var(--danger-light)"><i class="bi bi-x-circle" style="color:var(--danger)"></i></div>
+    <div class="stat-label">Out of Stock</div><div class="stat-value" style="color:var(--danger)">{{ out_of_stock }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #e65100">
+    <div class="stat-icon" style="background:#fff3e0"><i class="bi bi-exclamation-triangle" style="color:#e65100"></i></div>
+    <div class="stat-label">Reorder Now</div><div class="stat-value" style="color:#e65100">{{ reorder_now }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #f59e0b">
+    <div class="stat-icon" style="background:#fffbeb"><i class="bi bi-hourglass-split" style="color:#f59e0b"></i></div>
+    <div class="stat-label">Reorder Soon</div><div class="stat-value" style="color:#f59e0b">{{ reorder_soon }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--accent)">
+    <div class="stat-icon" style="background:var(--accent-light)"><i class="bi bi-check-circle" style="color:var(--accent)"></i></div>
+    <div class="stat-label">Well Stocked</div><div class="stat-value" style="color:var(--accent)">{{ well_stocked }}</div>
+  </div>
+</div>
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Items Requiring Action</span><a href="{% url 'stock:list' %}" class="btn btn-ghost btn-sm">View All</a></div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Code</th><th>Description</th><th class="center">Stock</th><th class="center">Avg/Mo</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for item in urgent_items %}
+          <tr>
+            <td><span class="code">{{ item.qb_code }}</span></td>
+            <td class="fw-600 fs-12">{{ item.description|truncatechars:28 }}</td>
+            <td class="center fw-600 {% if item.current_stock == 0 %}text-danger{% endif %}">{{ item.current_stock|floatformat:0 }}</td>
+            <td class="center text-muted fs-12">{{ item.monthly_moving_average|floatformat:1 }}</td>
+            <td><span class="badge {% if item.action == 'OUT OF STOCK' or item.action == 'REORDER NOW' %}badge-rejected{% else %}badge-hod{% endif %}" style="font-size:10px">{{ item.action }}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="5"><div class="empty-state" style="padding:20px"><i class="bi bi-check-circle-fill" style="font-size:24px;color:var(--accent)"></i><p class="mt-8 mb-0 fs-13">All items are well stocked.</p></div></td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Overstocked Items</span><span class="badge badge-head">{{ overstocked }}</span></div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Code</th><th>Description</th><th class="center">Stock</th><th class="center">Max</th><th class="center">Cover (mo)</th></tr></thead>
+        <tbody>
+          {% for item in overstocked_items %}
+          <tr>
+            <td><span class="code">{{ item.qb_code }}</span></td>
+            <td class="fs-12 fw-600">{{ item.description|truncatechars:26 }}</td>
+            <td class="center fw-600">{{ item.current_stock|floatformat:0 }}</td>
+            <td class="center text-muted fs-12">{{ item.max_threshold|floatformat:0 }}</td>
+            <td class="center"><span style="color:var(--info);font-weight:600">{% if item.stock_cover_months %}{{ item.stock_cover_months|floatformat:1 }}{% else %}—{% endif %}</span></td>
+          </tr>
+          {% empty %}<tr><td colspan="5"><div class="empty-state" style="padding:20px"><p class="mb-0 fs-13">No overstocked items.</p></div></td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

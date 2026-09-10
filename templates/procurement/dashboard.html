@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Procurement{% endblock %}
+{% block topbar_title %}Procurement Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-4 mb-24">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#ede9fe"><i class="bi bi-inbox" style="color:#6d28d9"></i></div>
+    <div class="stat-label">Awaiting Order</div>
+    <div class="stat-value">{{ open_pos|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#e0e7ff"><i class="bi bi-cart-check" style="color:#3730a3"></i></div>
+    <div class="stat-label">Ordered</div>
+    <div class="stat-value">{{ ordered|length }}</div>
+  </div>
+</div>
+
+<!-- Open POs awaiting procurement action -->
+<div class="card mb-16">
+  <div class="card-header">
+    <span class="card-title">Approved POs — Awaiting Order</span>
+    <span class="badge badge-proc">{{ open_pos|length }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>PO Number</th><th>Title</th><th>Department</th><th>Requester</th>
+            <th class="center">Items</th><th class="num">Total</th><th>Approved</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for po in open_pos %}
+        <tr>
+          <td><span class="code">{{ po.po_number }}</span></td>
+          <td class="fw-600">{{ po.title }}</td>
+          <td class="text-muted fs-12">{{ po.department.name }}</td>
+          <td class="text-muted fs-12">{{ po.requester.get_full_name }}</td>
+          <td class="center"><span class="tag">{{ po.active_line_items.count }}</span></td>
+          <td class="num text-muted fs-12">{{ po.total_amount|floatformat:2 }}</td>
+          <td class="text-muted fs-12">{{ po.sent_to_procurement_at|date:"d M Y" }}</td>
+          <td>
+            <a href="{% url 'procurement:create_order' po.pk %}" class="btn btn-primary btn-sm">
+              <i class="bi bi-cart-plus"></i> Process
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">
+          <div class="empty-state"><div class="empty-icon"><i class="bi bi-inbox"></i></div>
+            <p>No POs awaiting procurement action.</p></div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Ordered -->
+{% if ordered %}
+<div class="card">
+  <div class="card-header"><span class="card-title">Ordered — Sent to Stores</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>PO Number</th><th>Supplier</th><th>Reference</th><th>Ordered</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for o in ordered %}
+        <tr>
+          <td><span class="code">{{ o.purchase_order.po_number }}</span></td>
+          <td>{{ o.supplier_name|default:"—" }}</td>
+          <td class="text-muted fs-12">{{ o.order_reference|default:"—" }}</td>
+          <td class="text-muted fs-12">{{ o.ordered_at|date:"d M Y H:i" }}</td>
+          <td><a href="{% url 'procurement:order_detail' o.pk %}" class="btn btn-outline btn-sm">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

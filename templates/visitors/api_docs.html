@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Visitor API Docs{% endblock %}
+{% block topbar_title %}Visitor API Documentation{% endblock %}
+{% block content %}
+<div style="max-width:860px">
+
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">REST API — Mobile Integration Guide</span></div>
+    <div class="card-body">
+      <p class="text-muted fs-13 mb-0">
+        All endpoints are under <code>{{ request.scheme }}://{{ request.get_host }}/visitors/api/</code>.
+        Authentication uses HTTP Basic Auth (username:password) or a DRF Token if installed.
+      </p>
+    </div>
+  </div>
+
+  {% for ep in endpoints %}
+  <div class="card mb-12">
+    <div class="card-header" style="padding:12px 16px">
+      <div class="d-flex align-center gap-12">
+        <span class="badge {% if ep.method == 'GET' %}badge-head{% else %}badge-approved{% endif %}" style="font-size:11px;min-width:44px;text-align:center">{{ ep.method }}</span>
+        <span class="code" style="font-size:13px">{{ ep.path }}</span>
+        <span class="text-muted fs-12">{{ ep.title }}</span>
+      </div>
+    </div>
+    <div class="card-body" style="padding:12px 16px">
+      <p class="text-muted fs-12 mb-8">{{ ep.description }}</p>
+      {% if ep.params %}
+      <div class="mb-8">
+        <div class="fs-12 fw-600 mb-4">Parameters / Body</div>
+        <div style="background:#f8fafc;border-radius:6px;padding:10px 12px;font-size:11px;font-family:monospace">{{ ep.params }}</div>
+      </div>
+      {% endif %}
+      {% if ep.example %}
+      <div>
+        <div class="fs-12 fw-600 mb-4">Example Response</div>
+        <div style="background:#1e293b;color:#e2e8f0;border-radius:6px;padding:10px 12px;font-size:11px;font-family:monospace;white-space:pre">{{ ep.example }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

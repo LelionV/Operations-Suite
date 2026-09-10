@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Edit Order{% else %}Process PO{% endif %} — {{ po.po_number }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'procurement:dashboard' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {% if is_edit %}Edit Order{% else %}Process{% endif %} — {{ po.po_number }}
+{% endblock %}
+
+{% block content %}
+<div class="alert alert-info mb-16">
+  <i class="bi bi-info-circle"></i>
+  <span>
+    <strong>{{ po.po_number }}</strong> · {{ po.title }}
+    &nbsp;·&nbsp; {{ po.department }}
+    &nbsp;·&nbsp; Requester: {{ po.requester.get_full_name }}
+    &nbsp;·&nbsp; Total: <strong>{{ po.total_amount|floatformat:2 }}</strong>
+  </span>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="grid grid-main">
+    <div>
+      <!-- Supplier (all optional) -->
+      <div class="card mb-16">
+        <div class="card-header">
+          <span class="card-title">Supplier Details</span>
+          <span class="badge badge-draft fs-12">All optional</span>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-2" style="gap:16px">
+            <div class="form-group">
+              <label class="form-label">Supplier Name</label>
+              {{ form.supplier_name }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact Person</label>
+              {{ form.supplier_contact }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Supplier Email</label>
+              {{ form.supplier_email }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Order / Invoice Reference</label>
+              {{ form.order_reference }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expected Delivery Date</label>
+              {{ form.expected_delivery }}
+            </div>
+            <div class="form-group" style="grid-column:span 2">
+              <label class="form-label">Notes</label>
+              {{ form.notes }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line items + pricing -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Line Items — Unit Prices</span>
+          <span class="badge badge-draft fs-12">Prices optional</span>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code</th><th>Description</th><th class="center">Qty</th>
+                <th>UOM</th><th>Unit Price</th><th class="num">Line Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in active_items %}
+              <tr>
+                <td><span class="code">{{ item.code }}</span></td>
+                <td>
+                  <div class="fw-600">{{ item.description }}</div>
+                  {% if item.spec %}<div class="text-muted fs-12">{{ item.spec }}</div>{% endif %}
+                </td>
+                <td class="center fw-600">{{ item.quantity }}</td>
+                <td class="text-muted fs-12">{{ item.uom }}</td>
+                <td style="width:140px">
+                  <input type="number" name="price_{{ item.pk }}"
+                         class="form-control unit-price"
+                         data-qty="{{ item.quantity }}"
+                         min="0" step="0.01"
+                         value="{% if proc_line_map %}{% for k, v in proc_line_map.items %}{% if k == item.pk %}{{ v.unit_price }}{% endif %}{% endfor %}{% else %}0{% endif %}">
+                </td>
+                <td class="num line-total text-muted fs-12">0.00</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr style="background:#f8fafc">
+                <td colspan="5" style="text-align:right;font-weight:600;padding:12px 14px;font-size:13px">Grand Total</td>
+                <td class="num fw-700" id="grand-total" style="padding:12px 14px;font-size:14px">0.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Save Record</span></div>
+        <div class="card-body">
+          <p class="text-muted fs-12 mb-16">
+            Save the procurement record. You can edit it later and add supplier details at any time.
+            When ready, click <strong>Mark as Ordered</strong> to send the PO to stores.
+          </p>
+          <button type="submit" class="btn btn-primary btn-block mb-8">
+            <i class="bi bi-save"></i> Save Record
+          </button>
+          <a href="{% url 'procurement:dashboard' %}" class="btn btn-ghost btn-block">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function recalc() {
+  let grand = 0;
+  const totals = document.querySelectorAll('.line-total');
+  document.querySelectorAll('.unit-price').forEach((input, i) => {
+    const qty   = parseFloat(input.dataset.qty) || 0;
+    const price = parseFloat(input.value) || 0;
+    const tot   = qty * price;
+    grand += tot;
+    if (totals[i]) totals[i].textContent = tot.toFixed(2);
+  });
+  document.getElementById('grand-total').textContent = grand.toFixed(2);
+}
+document.querySelectorAll('.unit-price').forEach(i => i.addEventListener('input', recalc));
+recalc();
+</script>
+{% endblock %}

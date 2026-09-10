@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}QB Items{% endblock %}
+{% block topbar_title %}QB Items{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'inventory:upload' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-upload"></i> Upload File
+  </a>
+{% endblock %}
+
+{% block content %}
+{% if logs %}
+<div class="card mb-16">
+  <div class="card-header"><span class="card-title">Recent Imports</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>File</th><th>Uploaded By</th><th class="center">Created</th>
+            <th class="center">Updated</th><th class="center">Skipped</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="fw-600 fs-12">{{ log.filename }}</td>
+          <td class="text-muted fs-12">{{ log.uploaded_by.get_full_name|default:"—" }}</td>
+          <td class="center" style="color:var(--accent)">{{ log.rows_created }}</td>
+          <td class="center" style="color:var(--brand)">{{ log.rows_updated }}</td>
+          <td class="center text-muted">{{ log.rows_skipped }}</td>
+          <td class="text-muted fs-12">{{ log.uploaded_at|date:"d M Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card mb-16">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="get" style="display:flex;gap:10px">
+      <div class="input-group" style="max-width:380px">
+        <input type="text" name="q" value="{{ q }}" class="form-control"
+               placeholder="Search code or description…">
+        <button type="submit" class="btn btn-primary" style="padding:8px 14px">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      {% if q %}
+        <a href="{% url 'inventory:item_list' %}" class="btn btn-ghost btn-sm">
+          <i class="bi bi-x"></i> Clear
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Items</span>
+    <span class="text-muted fs-12">{{ paginator.count|default:items|length }} total</span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Code</th><th>Description</th><th>UOM</th><th>Last Updated</th></tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td><span class="code">{{ item.code }}</span></td>
+          <td class="fw-600">{{ item.name }}</td>
+          <td class="text-muted fs-12">{{ item.uom }}</td>
+          <td class="text-muted fs-12">{{ item.uploaded_at|date:"d M Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-database-x"></i></div>
+            <p>No items yet. <a href="{% url 'inventory:upload' %}">Upload a QB file</a> to get started.</p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">← Prev</a>
+    {% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

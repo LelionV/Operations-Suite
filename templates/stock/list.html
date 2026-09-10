@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Stock Items{% endblock %}
+{% block topbar_title %}Stock Items{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'stock:report' %}" class="btn btn-outline btn-sm"><i class="bi bi-download"></i> Download Report</a>
+  <a href="{% url 'stock:upload' %}" class="btn btn-primary btn-sm"><i class="bi bi-upload"></i> Upload</a>
+{% endblock %}
+{% block content %}
+<div class="card mb-16">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="input-group" style="max-width:280px">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search code or description…">
+        <button type="submit" class="btn btn-primary" style="padding:8px 12px"><i class="bi bi-search"></i></button>
+      </div>
+      <select name="action" class="form-select" style="width:auto" onchange="this.form.submit()">
+        {% for val,label in action_choices %}<option value="{{ val }}" {% if action_f == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <select name="category" class="form-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for cat in categories %}<option value="{{ cat }}" {% if cat_f == cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}
+      </select>
+      {% if q or action_f or cat_f %}<a href="{% url 'stock:list' %}" class="btn btn-ghost btn-sm"><i class="bi bi-x"></i> Clear</a>{% endif %}
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Code</th><th>Description</th><th>UOM</th><th>Category</th><th class="num">Stock</th><th class="num">Avg/Mo</th><th class="num">Min</th><th class="num">Max</th><th class="center">Cover (mo)</th><th class="num">Reorder Qty</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td><span class="code">{{ item.qb_code }}</span></td>
+          <td class="fw-600 fs-12">{{ item.description }}</td>
+          <td class="text-muted fs-12">{{ item.uom }}</td>
+          <td class="text-muted fs-12">{{ item.category|default:"—" }}</td>
+          <td class="num fw-600 {% if item.current_stock == 0 %}text-danger{% endif %}">{{ item.current_stock|floatformat:0 }}</td>
+          <td class="num text-muted">{{ item.monthly_moving_average|floatformat:1 }}</td>
+          <td class="num text-muted fs-12">{{ item.min_threshold|floatformat:1 }}</td>
+          <td class="num text-muted fs-12">{{ item.max_threshold|floatformat:0 }}</td>
+          <td class="center">{% if item.stock_cover_months is not None %}<span class="fw-600 {% if item.stock_cover_months < 1 %}text-danger{% elif item.stock_cover_months < 3 %}text-warn{% else %}text-success{% endif %}">{{ item.stock_cover_months|floatformat:1 }}</span>{% else %}—{% endif %}</td>
+          <td class="num">{% if item.target_reorder_value > 0 %}<span class="fw-600" style="color:var(--brand)">{{ item.target_reorder_value|floatformat:0 }}</span>{% else %}—{% endif %}</td>
+          <td><span class="badge {% if item.action == 'OUT OF STOCK' or item.action == 'REORDER NOW' %}badge-rejected{% elif item.action == 'REORDER SOON' %}badge-hod{% elif item.action == 'OVERSTOCKED' %}badge-head{% elif item.action == 'WELL STOCKED' %}badge-approved{% else %}badge-draft{% endif %}" style="font-size:10px;white-space:nowrap">{{ item.action }}</span></td>
+        </tr>
+        {% empty %}<tr><td colspan="11"><div class="empty-state"><div class="empty-icon"><i class="bi bi-box"></i></div><p>No stock items. <a href="{% url 'stock:upload' %}">Upload a file</a>.</p></div></td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if action_f %}&action={{ action_f }}{% endif %}" class="btn btn-outline btn-sm">← Prev</a>{% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if action_f %}&action={{ action_f }}{% endif %}" class="btn btn-outline btn-sm">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

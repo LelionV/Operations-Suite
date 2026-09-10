@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}All Tickets{% endblock %}
+{% block topbar_title %}All Tickets{% endblock %}
+{% block topbar_actions %}
+  {% if not request.user.is_ticket_viewer %}
+  <a href="{% url 'tickets:create' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> New Ticket
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if open_count %}
+<div class="alert alert-info" style="padding:8px 14px">
+  <i class="bi bi-ticket-detailed"></i>
+  <span class="fs-12">
+    <strong>{{ open_count }}</strong> open ticket{% if open_count != 1 %}s{% endif %} in your scope.
+  </span>
+</div>
+{% endif %}
+
+<!-- Filters -->
+<div class="card mb-16">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="input-group" style="max-width:280px">
+        <input type="text" name="q" value="{{ q }}" class="form-control"
+               placeholder="Search code or title…">
+        <button type="submit" class="btn btn-primary" style="padding:8px 12px">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      <select name="status" class="form-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if status_f == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select name="priority" class="form-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">All priorities</option>
+        {% for val, label in priority_choices %}
+          <option value="{{ val }}" {% if prio_f == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select name="dept" class="form-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">All departments</option>
+        {% for d in departments %}
+          <option value="{{ d.pk }}" {% if dept_f == d.pk|stringformat:"s" %}selected{% endif %}>
+            {{ d.name }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if q or status_f or prio_f or dept_f %}
+        <a href="{% url 'tickets:list' %}" class="btn btn-ghost btn-sm">
+          <i class="bi bi-x"></i> Clear
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Title</th>
+          <th>Department</th>
+          <th>Linked PO</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Raised By</th>
+          <th>Created</th>
+          <th>Overdue</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr {% if t.is_overdue %}style="background:#fff8f8"{% endif %}>
+          <td><span class="code">{{ t.code }}</span></td>
+          <td class="fw-600">{{ t.title|truncatechars:40 }}</td>
+          <td class="text-muted fs-12">{{ t.department|default:"—" }}</td>
+          <td>
+            {% if t.purchase_order %}
+              <a href="{% url 'purchase_orders:detail' t.purchase_order.pk %}"
+                 class="code" style="font-size:12px">{{ t.purchase_order.po_number }}</a>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge badge-{{ t.priority_css }}" style="font-size:10px">
+              {{ t.get_priority_display }}
+            </span>
+          </td>
+          <td>
+            <span class="badge badge-{{ t.status_css }}" style="font-size:10px">
+              {{ t.get_status_display }}
+            </span>
+          </td>
+          <td class="text-muted fs-12">
+            {{ t.created_by.get_full_name|default:t.created_by.username }}
+          </td>
+          <td class="text-muted fs-12">{{ t.created_at|date:"d M Y" }}</td>
+          <td>
+            {% if t.is_overdue %}
+              <span class="badge badge-rejected" style="font-size:10px">
+                {{ t.overdue_days }}d
+              </span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'tickets:detail' t.pk %}" class="btn btn-outline btn-sm py-0">
+              View
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-ticket"></i></div>
+            <p>No tickets found.</p>
+            {% if not request.user.is_ticket_viewer %}
+            <a href="{% url 'tickets:create' %}" class="btn btn-primary btn-sm">
+              Create First Ticket
+            </a>
+            {% endif %}
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_f %}&status={{ status_f }}{% endif %}{% if prio_f %}&priority={{ prio_f }}{% endif %}{% if dept_f %}&dept={{ dept_f }}{% endif %}"
+         class="btn btn-outline btn-sm">← Prev</a>
+    {% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_f %}&status={{ status_f }}{% endif %}{% if prio_f %}&priority={{ prio_f }}{% endif %}{% if dept_f %}&dept={{ dept_f }}{% endif %}"
+         class="btn btn-outline btn-sm">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

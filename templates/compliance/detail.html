@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.title }}{% endblock %}
+{% block topbar_title %}<a href="{% url 'compliance:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ item.title }}{% endblock %}
+{% block topbar_actions %}<a href="{% url 'compliance:edit' item.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i> Edit</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="fw-600" style="font-size:15px">{{ item.title }}</div>
+      {% if item.reference %}<div class="text-muted fs-12 mt-4">Ref: {{ item.reference }}</div>{% endif %}
+    </div>
+    <span class="badge badge-{{ item.status_css }}">{{ item.get_status_display }}</span>
+  </div>
+  <div class="card-body">
+    <div class="grid grid-3" style="gap:16px">
+      <div><div class="form-label">Category</div>{{ item.get_category_display }}</div>
+      <div><div class="form-label">Owner</div>{{ item.owner.get_full_name|default:"—" }}</div>
+      <div><div class="form-label">Review Date</div>{{ item.review_date|date:"d M Y"|default:"—" }}</div>
+      <div style="grid-column:span 3"><div class="form-label">Applicable To</div>{{ item.applicable_to|default:"—" }}</div>
+      {% if item.description %}<div style="grid-column:span 3"><div class="form-label">Description</div><div class="fs-13" style="white-space:pre-wrap">{{ item.description }}</div></div>{% endif %}
+      {% if item.notes %}<div style="grid-column:span 3"><div class="form-label">Notes</div><div class="fs-13 text-muted">{{ item.notes }}</div></div>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

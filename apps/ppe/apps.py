@@ -1,0 +1,5 @@
+
+from django.apps import AppConfig
+class PpeConfig(AppConfig):
+    default_auto_field="django.db.models.BigAutoField"
+    name="apps.ppe"; verbose_name="PPE Management"

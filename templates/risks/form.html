@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}<a href="{% url "risks:list" %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger mb-16"><i class="bi bi-exclamation-circle"></i><span>{{ form.non_field_errors }}</span></div>{% endif %}
+  <div class="grid grid-main">
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Risk Register Details</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.hazard_source.label }}</label>
+            {{ form.hazard_source }}
+            {% if form.hazard_source.errors %}<div class="form-error">{{ form.hazard_source.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.department.label }}</label>
+            {{ form.department }}
+            {% if form.department.errors %}<div class="form-error">{{ form.department.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.site.label }}</label>
+            {{ form.site }}
+            {% if form.site.errors %}<div class="form-error">{{ form.site.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.likelihood.label }}</label>
+            {{ form.likelihood }}
+            {% if form.likelihood.errors %}<div class="form-error">{{ form.likelihood.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.impact.label }}</label>
+            {{ form.impact }}
+            {% if form.impact.errors %}<div class="form-error">{{ form.impact.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.controls.label }}</label>
+            {{ form.controls }}
+            {% if form.controls.errors %}<div class="form-error">{{ form.controls.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+      <a href="{% url "risks:list" %}" class="btn btn-ghost" style="margin-left:8px">Cancel</a>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Additional Fields</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.mitigation_plan.label }}</label>
+            {{ form.mitigation_plan }}
+            {% if form.mitigation_plan.errors %}<div class="form-error">{{ form.mitigation_plan.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.likelihood_residual.label }}</label>
+            {{ form.likelihood_residual }}
+            {% if form.likelihood_residual.errors %}<div class="form-error">{{ form.likelihood_residual.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.impact_residual.label }}</label>
+            {{ form.impact_residual }}
+            {% if form.impact_residual.errors %}<div class="form-error">{{ form.impact_residual.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.owner.label }}</label>
+            {{ form.owner }}
+            {% if form.owner.errors %}<div class="form-error">{{ form.owner.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.review_date.label }}</label>
+            {{ form.review_date }}
+            {% if form.review_date.errors %}<div class="form-error">{{ form.review_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="form-error">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

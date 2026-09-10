@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}{{ asset.asset_tag }}{% endblock %}
+{% block topbar_title %}<a href="{% url 'assets:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ asset.asset_tag }} — {{ asset.name }}{% endblock %}
+{% block topbar_actions %}
+  {% if can_manage %}<a href="{% url 'assets:edit' asset.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i> Edit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid grid-main">
+  <div>
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="fw-600" style="font-size:15px">{{ asset.name }}</div>
+          <div class="text-muted fs-12 mt-4">{{ asset.brand }} {% if asset.model_number %}· {{ asset.model_number }}{% endif %} {% if asset.serial_number %}· S/N: {{ asset.serial_number }}{% endif %}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge badge-{{ asset.status_css }}">{{ asset.get_status_display }}</span>
+          <span class="badge badge-{% if asset.condition == 'EXCELLENT' or asset.condition == 'GOOD' %}approved{% elif asset.condition == 'FAIR' %}hod{% else %}rejected{% endif %}" style="font-size:10px">{{ asset.get_condition_display }}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="grid grid-3" style="gap:16px">
+          <div><div class="fs-12 text-muted fw-600 mb-4">Asset Tag</div><span class="code">{{ asset.asset_tag }}</span></div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Category</div>{{ asset.category }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Department</div>{{ asset.department|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Allocated To</div>{{ asset.allocated_to.get_full_name|default:"<span class='text-muted'>Unallocated</span>" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Location</div>{{ asset.location|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Allocated Since</div>{{ asset.allocated_at|date:"d M Y"|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Purchase Date</div>{{ asset.purchase_date|date:"d M Y"|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Purchase Cost</div>{% if asset.purchase_cost %}{{ asset.purchase_cost|floatformat:2 }}{% else %}—{% endif %}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Depreciated Value</div>{% if asset.depreciated_value is not None %}{{ asset.depreciated_value|floatformat:2 }}{% else %}—{% endif %}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Warranty Expiry</div>
+            <span class="{% if asset.is_under_warranty == False %}text-danger fw-600{% elif asset.is_under_warranty %}text-success{% endif %}">
+              {{ asset.warranty_expiry|date:"d M Y"|default:"—" }}
+              {% if asset.is_under_warranty == True %}<span class="badge badge-approved" style="font-size:9px;margin-left:4px">Active</span>{% elif asset.is_under_warranty == False %}<span class="badge badge-rejected" style="font-size:9px;margin-left:4px">Expired</span>{% endif %}
+            </span>
+          </div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Linked PO</div>{% if asset.purchase_order %}<a href="{% url 'purchase_orders:detail' asset.purchase_order.pk %}" class="code" style="font-size:12px">{{ asset.purchase_order.po_number }}</a>{% else %}—{% endif %}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Created By</div><span class="text-muted fs-12">{{ asset.created_by.get_full_name|default:"—" }}</span></div>
+        </div>
+        {% if asset.description %}<div class="mt-16"><div class="fs-12 text-muted fw-600 mb-4">Description</div><div class="fs-13">{{ asset.description }}</div></div>{% endif %}
+        {% if asset.notes %}<div class="mt-12"><div class="fs-12 text-muted fw-600 mb-4">Notes</div><div class="fs-13 text-muted">{{ asset.notes }}</div></div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Audit trail -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Audit Trail</span><span class="text-muted fs-12">{{ mutations|length }} event{{ mutations|length|pluralize }}</span></div>
+      <div class="card-body">
+        <div class="timeline">
+          {% for m in mutations %}
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+              <div class="d-flex justify-between align-center">
+                <span class="fw-600 fs-12"><span class="tag" style="margin-right:6px">{{ m.get_mutation_type_display }}</span>{{ m.actor.get_full_name|default:m.actor.username }}</span>
+                <span class="tl-meta">{{ m.created_at|date:"d M Y H:i" }}</span>
+              </div>
+              {% if m.from_user or m.to_user %}<div class="text-muted fs-12 mt-4">User: {{ m.from_user.get_full_name|default:"—" }} → {{ m.to_user.get_full_name|default:"—" }}</div>{% endif %}
+              {% if m.from_department or m.to_department %}<div class="text-muted fs-12 mt-2">Dept: {{ m.from_department.name|default:"—" }} → {{ m.to_department.name|default:"—" }}</div>{% endif %}
+              {% if m.from_status or m.to_status %}<div class="text-muted fs-12 mt-2">Status: {{ m.from_status|default:"—" }} → {{ m.to_status|default:"—" }}</div>{% endif %}
+              {% if m.notes %}<div class="fs-12 mt-4" style="font-style:italic">{{ m.notes }}</div>{% endif %}
+            </div>
+          </div>
+          {% empty %}<p class="text-muted fs-13">No activity yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Add note -->
+      <div class="card-footer">
+        <form method="post" action="{% url 'assets:add_note' asset.pk %}">
+          {% csrf_token %}
+          <div class="d-flex gap-10">
+            <div style="flex:1">{{ note_form.notes }}</div>
+            <button type="submit" class="btn btn-outline btn-sm" style="align-self:flex-end"><i class="bi bi-chat-text"></i> Add Note</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div>
+    <!-- Allocate -->
+    {% if can_manage or request.user.is_hod %}
+    <div class="action-panel primary mb-16">
+      <div class="action-panel-header"><i class="bi bi-person-check"></i> Allocate to User</div>
+      <div class="action-panel-body">
+        <form method="post" action="{% url 'assets:allocate' asset.pk %}">
+          {% csrf_token %}
+          <div class="form-group">{{ allocate_form.allocated_to }}</div>
+          <div class="form-group">{{ allocate_form.notes }}</div>
+          <button type="submit" class="btn btn-primary btn-block btn-sm">Allocate</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    <!-- Offboard -->
+    {% if can_offboard %}
+    <div class="action-panel warning mb-16">
+      <div class="action-panel-header"><i class="bi bi-person-dash"></i> Offboard Device</div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-8">Removes the device from the current user. Currently allocated to <strong>{{ asset.allocated_to.get_full_name }}</strong>.</p>
+        <form method="post" action="{% url 'assets:offboard' asset.pk %}" onsubmit="return confirm('Offboard this device?')">
+          {% csrf_token %}
+          <div class="form-group"><label class="form-label fs-12">After offboarding</label>{{ offboard_form.new_status }}</div>
+          <div class="form-group">{{ offboard_form.notes }}</div>
+          <button type="submit" class="btn btn-warning btn-block btn-sm">Offboard</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    <!-- Transfer -->
+    {% if can_transfer %}
+    <div class="action-panel mb-16" style="border-color:var(--info-light);background:var(--info-light)">
+      <div class="action-panel-header" style="color:var(--info)"><i class="bi bi-arrow-left-right"></i> Transfer Department</div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-8">Move this asset to another cost-centre department.</p>
+        <form method="post" action="{% url 'assets:transfer' asset.pk %}">
+          {% csrf_token %}
+          <div class="form-group">{{ transfer_form.to_department }}</div>
+          <div class="form-group">{{ transfer_form.notes }}</div>
+          <button type="submit" class="btn btn-outline btn-block btn-sm">Transfer</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    <!-- Status change -->
+    {% if can_manage or request.user.is_hod %}
+    <div class="card">
+      <div class="card-header"><span class="card-title">Change Status</span></div>
+      <div class="card-body">
+        <form method="post" action="{% url 'assets:change_status' asset.pk %}">
+          {% csrf_token %}
+          <div class="form-group"><label class="form-label fs-12">Status</label>{{ status_form.status }}</div>
+          <div class="form-group"><label class="form-label fs-12">Condition</label>{{ status_form.condition }}</div>
+          <div class="form-group">{{ status_form.notes }}</div>
+          <button type="submit" class="btn btn-outline btn-block btn-sm">Update Status</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Purchase Orders{% endblock %}
+{% block topbar_title %}Purchase Orders{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'purchase_orders:create' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg"></i> New PO
+  </a>
+{% endblock %}
+
+{% block content %}
+{% if pending_count %}
+<div class="alert alert-warning">
+  <i class="bi bi-clock"></i>
+  <span>You have <strong>{{ pending_count }}</strong> purchase order{% if pending_count != 1 %}s{% endif %} awaiting your action.</span>
+</div>
+{% endif %}
+
+<!-- Stats row -->
+<div class="grid grid-4 mb-24">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--brand-light)"><i class="bi bi-file-text" style="color:var(--brand)"></i></div>
+    <div class="stat-label">My POs</div>
+    <div class="stat-value">{{ pos.paginator.count|default:pos|length }}</div>
+  </div>
+  {% if request.user.is_hod or request.user.is_head_approver %}
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--warn-light)"><i class="bi bi-hourglass-split" style="color:var(--warn)"></i></div>
+    <div class="stat-label">Pending Action</div>
+    <div class="stat-value">{{ pending_count|default:"0" }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-16">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="get" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px" class="input-group">
+        <input type="text" name="q" value="{{ q }}" class="form-control"
+               placeholder="Search PO number or title…" style="border-radius:6px 0 0 6px">
+        <button type="submit" class="btn btn-primary" style="border-radius:0 6px 6px 0;padding:8px 14px">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      <select name="status" class="form-select" style="width:auto;min-width:180px" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {% if current_status or q %}
+        <a href="{% url 'purchase_orders:list' %}" class="btn btn-ghost btn-sm">
+          <i class="bi bi-x"></i> Clear
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>PO Number</th>
+          <th>Title</th>
+          <th>Department</th>
+          <th>Requester</th>
+          <th class="center">Items</th>
+          <th class="num">Total</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for po in pos %}
+        <tr>
+          <td><span class="code">{{ po.po_number }}</span></td>
+          <td style="font-weight:500">{{ po.title }}</td>
+          <td class="text-muted fs-12">{{ po.department.name }}</td>
+          <td class="text-muted fs-12">{{ po.requester.get_full_name|default:po.requester.username }}</td>
+          <td class="center">
+            <span class="tag">{{ po.line_items.count }}</span>
+          </td>
+          <td class="num text-muted fs-12">{{ po.total_amount|floatformat:2 }}</td>
+          <td>
+            {% include 'purchase_orders/_status_badge.html' with status=po.status label=po.get_status_display %}
+            {% if po.hod_auto %}<span title="HOD auto-approved" style="font-size:12px;margin-left:4px">⚡</span>{% endif %}
+            {% if po.rejected_line_items.exists %}<span title="Has rejected items" style="font-size:12px;color:var(--warn)"> ⚠</span>{% endif %}
+          </td>
+          <td class="text-muted fs-12">{{ po.created_at|date:"d M Y" }}</td>
+          <td>
+            <a href="{% url 'purchase_orders:detail' po.pk %}" class="btn btn-outline btn-sm">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9">
+            <div class="empty-state">
+              <div class="empty-icon"><i class="bi bi-file-earmark-x"></i></div>
+              <p>No purchase orders found.</p>
+              <a href="{% url 'purchase_orders:create' %}" class="btn btn-primary btn-sm">Create your first PO</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" class="btn btn-outline btn-sm">← Prev</a>
+    {% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" class="btn btn-outline btn-sm">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Received Items{% endblock %}
+{% block topbar_title %}Received Items{% endblock %}
+
+{% block content %}
+
+<div class="card mb-16">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="get" style="display:flex;gap:10px;align-items:center">
+      <div class="input-group" style="max-width:380px">
+        <input type="text" name="q" value="{{ q }}" class="form-control"
+               placeholder="Search GRN, PO number or title…">
+        <button type="submit" class="btn btn-primary" style="padding:8px 14px">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      {% if q %}
+        <a href="{% url 'stores:received_list' %}" class="btn btn-ghost btn-sm">
+          <i class="bi bi-x"></i> Clear
+        </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Goods Received Notes</span>
+    <span class="text-muted fs-12">
+      {% if request.user.is_storekeeper or request.user.is_staff or request.user.is_head_approver %}All departments
+      {% elif request.user.department %}{{ request.user.department.name }}
+      {% else %}Your POs{% endif %}
+    </span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>GRN Number</th>
+          <th>PO Number</th>
+          <th>Title</th>
+          <th>Department</th>
+          <th>Received By</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for grn in grns %}
+        <tr>
+          <td><span class="code">{{ grn.grn_number }}</span></td>
+          <td><span class="code">{{ grn.purchase_order.po_number }}</span></td>
+          <td class="fw-600">{{ grn.purchase_order.title }}</td>
+          <td class="text-muted fs-12">{{ grn.purchase_order.department.name }}</td>
+          <td class="text-muted fs-12">{{ grn.received_by.get_full_name }}</td>
+          <td class="text-muted fs-12">{{ grn.received_at|date:"d M Y H:i" }}</td>
+          <td>
+            {% if grn.status == 'COMPLETE' %}
+              <span class="badge badge-approved"><i class="bi bi-check-circle"></i> Fully Received</span>
+            {% else %}
+              <span class="badge badge-partial"><i class="bi bi-hourglass-split"></i> Partial</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'stores:grn_detail' grn.pk %}" class="btn btn-outline btn-sm">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-bag-x"></i></div>
+            <p>No received items yet{% if q %} matching "{{ q }}"{% endif %}.</p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">← Prev</a>
+    {% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn btn-outline btn-sm">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

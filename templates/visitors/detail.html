@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}{{ appt.ref_number }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'visitors:dashboard' %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>
+  {{ appt.ref_number }}
+{% endblock %}
+{% block topbar_actions %}
+  {% if can_update %}<a href="{% url 'visitors:edit' appt.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i> Edit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid grid-main">
+  <div>
+    <!-- Visitor card -->
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="fw-600" style="font-size:16px">{{ appt.visitor_name }}</div>
+          {% if appt.visitor_company %}<div class="text-muted fs-12 mt-2">{{ appt.visitor_company }}</div>{% endif %}
+        </div>
+        <span class="badge badge-{{ appt.status_css }}" style="font-size:13px">{{ appt.get_status_display }}</span>
+      </div>
+      <div class="card-body">
+        <div class="grid grid-3" style="gap:16px">
+          <div><div class="fs-12 text-muted fw-600 mb-4">Phone</div>{{ appt.visitor_phone|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Email</div>{{ appt.visitor_email|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">ID Number</div>{{ appt.visitor_id_number|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Host</div><span class="fw-600">{{ appt.host_display }}</span></div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Department</div>{{ appt.host_department|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Booked By</div>{{ appt.booked_by.get_full_name|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Date</div><span class="fw-600">{{ appt.scheduled_date|date:"d M Y" }}</span></div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Time</div>{{ appt.scheduled_start|time:"H:i" }}{% if appt.scheduled_end %} — {{ appt.scheduled_end|time:"H:i" }}{% endif %}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Badge</div>{{ appt.badge_number|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Arrived At</div>{{ appt.arrived_at|date:"d M Y H:i"|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Checked Out</div>{{ appt.checked_out_at|date:"d M Y H:i"|default:"—" }}</div>
+          <div><div class="fs-12 text-muted fw-600 mb-4">Host Notified</div>{{ appt.host_notified_at|date:"H:i"|default:"—" }}</div>
+        </div>
+        {% if appt.agenda %}
+        <div class="mt-16" style="background:#f8fafc;border-radius:8px;padding:14px 16px;border-left:4px solid var(--brand)">
+          <div class="fs-12 text-muted fw-600 mb-6">Agenda / Purpose of Visit</div>
+          <div class="fs-13" style="white-space:pre-wrap">{{ appt.agenda }}</div>
+        </div>
+        {% endif %}
+        {% if appt.vehicle_plate %}
+        <div class="mt-16" style="background:#f0fdf4;border-radius:8px;padding:12px 16px;border-left:4px solid var(--accent)">
+          <div class="fs-12 text-muted fw-600 mb-4"><i class="bi bi-car-front" style="margin-right:4px"></i>Vehicle</div>
+          <div class="fs-13"><span class="code" style="font-size:13px">{{ appt.vehicle_plate }}</span>
+            {% if appt.vehicle_make %} &nbsp;·&nbsp; {{ appt.vehicle_make }}{% endif %}
+            {% if appt.vehicle_colour %} &nbsp;·&nbsp; {{ appt.vehicle_colour }}{% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% if appt.notes %}<div class="mt-12 text-muted fs-12">{{ appt.notes }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Audit log -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Activity Log</span></div>
+      <div class="card-body">
+        <div class="timeline">
+          {% for log in logs %}
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+              <div class="d-flex justify-between align-center">
+                <span class="fw-600 fs-12">
+                  {% if log.from_status %}{{ log.from_status }} → {% endif %}
+                  <span class="tag" style="font-size:11px">{{ log.to_status }}</span>
+                  {% if log.actor %}&nbsp; {{ log.actor.get_full_name|default:log.actor.username }}{% endif %}
+                </span>
+                <span class="tl-meta">{{ log.created_at|date:"d M Y H:i" }}</span>
+              </div>
+              {% if log.notes %}<div class="text-muted fs-12 mt-4 fst-italic">{{ log.notes }}</div>{% endif %}
+            </div>
+          </div>
+          {% empty %}<p class="text-muted fs-13">No activity yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div>
+    <!-- Check-in (gatekeeper) -->
+    {% if is_gatekeeper and appt.status == 'SCHEDULED' %}
+    <div class="action-panel success mb-16">
+      <div class="action-panel-header"><i class="bi bi-person-check"></i> Check In Visitor</div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-8">Confirm the visitor has arrived. Host will be notified immediately{% if appt.visitor_phone %} and a WhatsApp confirmation sent to the visitor{% endif %}.</p>
+        <form method="post" action="{% url 'visitors:arrive' appt.pk %}">
+          {% csrf_token %}
+          <div class="form-group"><label class="form-label fs-12">Badge / Pass Number (optional)</label>{{ arrival_form.badge_number }}</div>
+          <div class="form-group">{{ arrival_form.notes }}</div>
+          <button type="submit" class="btn btn-success btn-block">
+            <i class="bi bi-check-circle"></i> Mark as Arrived
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Status update -->
+    {% if can_update and appt.status not in 'COMPLETED,CANCELLED' %}
+    <div class="action-panel primary mb-16">
+      <div class="action-panel-header"><i class="bi bi-arrow-repeat"></i> Update Status</div>
+      <div class="action-panel-body">
+        <form method="post" action="{% url 'visitors:update_status' appt.pk %}">
+          {% csrf_token %}
+          <div class="form-group">{{ status_form.status }}</div>
+          <div class="form-group">{{ status_form.notes }}</div>
+          <button type="submit" class="btn btn-primary btn-block btn-sm">Update</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick info -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Quick Info</span></div>
+      <div style="padding:0">
+        {% for label,val in info_rows %}
+        <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between">
+          <span class="fs-12 text-muted fw-600">{{ label }}</span>
+          <span class="fs-12">{{ val }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

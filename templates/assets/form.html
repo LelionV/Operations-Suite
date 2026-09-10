@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}<a href="{% url 'assets:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <div class="grid grid-main">
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Asset Details</span></div>
+        <div class="card-body">
+          <div class="grid grid-2" style="gap:16px">
+            <div class="form-group"><label class="form-label">Asset Tag <span class="req">*</span></label>{{ form.asset_tag }}</div>
+            <div class="form-group"><label class="form-label">Name <span class="req">*</span></label>{{ form.name }}</div>
+            <div class="form-group"><label class="form-label">Category <span class="req">*</span></label>{{ form.category }}</div>
+            <div class="form-group"><label class="form-label">Status</label>{{ form.status }}</div>
+            <div class="form-group"><label class="form-label">Condition</label>{{ form.condition }}</div>
+            <div class="form-group"><label class="form-label">Brand</label>{{ form.brand }}</div>
+            <div class="form-group"><label class="form-label">Model Number</label>{{ form.model_number }}</div>
+            <div class="form-group"><label class="form-label">Serial Number</label>{{ form.serial_number }}</div>
+            <div class="form-group" style="grid-column:span 2"><label class="form-label">Description</label>{{ form.description }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Financial</span></div>
+        <div class="card-body">
+          <div class="grid grid-2" style="gap:16px">
+            <div class="form-group"><label class="form-label">Purchase Date</label>{{ form.purchase_date }}</div>
+            <div class="form-group"><label class="form-label">Purchase Cost</label>{{ form.purchase_cost }}</div>
+            <div class="form-group"><label class="form-label">Warranty Expiry</label>{{ form.warranty_expiry }}</div>
+            <div class="form-group"><label class="form-label">Linked PO</label>{{ form.purchase_order }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Location & Allocation</span></div>
+        <div class="card-body">
+          <div class="grid grid-2" style="gap:16px">
+            <div class="form-group"><label class="form-label">Department (Cost Centre)</label>{{ form.department }}</div>
+            <div class="form-group"><label class="form-label">Allocated To</label>{{ form.allocated_to }}</div>
+            <div class="form-group" style="grid-column:span 2"><label class="form-label">Location</label>{{ form.location }}</div>
+            <div class="form-group" style="grid-column:span 2"><label class="form-label">Notes</label>{{ form.notes }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Save Asset</span></div>
+        <div class="card-body">
+          <button type="submit" class="btn btn-primary btn-block mb-8"><i class="bi bi-save"></i> {{ page_title }}</button>
+          <a href="{% url 'assets:list' %}" class="btn btn-ghost btn-block">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

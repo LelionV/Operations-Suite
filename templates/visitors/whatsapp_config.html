@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}WhatsApp Configuration{% endblock %}
+{% block topbar_title %}WhatsApp Configuration{% endblock %}
+{% block content %}
+<div style="max-width:760px">
+
+  <div class="card mb-16">
+    <div class="card-header">
+      <span class="card-title"><i class="bi bi-whatsapp" style="margin-right:8px;color:#25D366"></i>WhatsApp Business API</span>
+      {% if cfg and cfg.is_active %}
+        <span class="badge badge-approved"><i class="bi bi-check-circle"></i> Configured</span>
+      {% else %}
+        <span class="badge badge-draft">Not Configured</span>
+      {% endif %}
+    </div>
+    <div class="card-body">
+      <p class="text-muted fs-13 mb-16">
+        Configure the WhatsApp provider used to send visitor arrival alerts and appointment confirmations.
+        Choose your provider and fill in only the fields relevant to it.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="grid grid-2" style="gap:16px">
+
+          <div class="form-group">
+            <label class="form-label">Config Name</label>
+            {{ form.name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Provider</label>
+            {{ form.provider }}
+          </div>
+
+          <!-- Twilio / Meta fields -->
+          <div class="form-group" id="field-account-sid">
+            <label class="form-label">Account SID / WABA ID</label>
+            {{ form.account_sid }}
+            <div class="form-hint">Twilio: Account SID · Meta: WhatsApp Business Account ID</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Auth Token / API Token</label>
+            {{ form.auth_token }}
+            <div class="form-hint">Twilio: Auth Token · Meta: Permanent System User Token</div>
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label">From Number (WhatsApp Sender)</label>
+            {{ form.from_number }}
+            <div class="form-hint">E.164 format e.g. +12345678900 (Twilio) · For Meta, leave blank — uses WABA number</div>
+          </div>
+
+          <!-- Custom REST -->
+          <div class="form-group" style="grid-column:span 2" id="field-api-url">
+            <label class="form-label">Custom API URL <span class="badge badge-draft" style="font-size:10px">Custom provider only</span></label>
+            {{ form.api_url }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">API Key <span class="badge badge-draft" style="font-size:10px">Custom only</span></label>
+            {{ form.api_key }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Extra Headers (JSON) <span class="badge badge-draft" style="font-size:10px">Custom only</span></label>
+            {{ form.extra_headers }}
+            <div class="form-hint">e.g. {"X-Channel": "whatsapp"}</div>
+          </div>
+
+          <div class="form-group" style="grid-column:span 2">
+            <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              {{ form.is_active }} <span>Active (enable WhatsApp sending)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="d-flex gap-12 mt-8">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save Configuration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Test -->
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title"><i class="bi bi-send" style="margin-right:6px"></i>Send Test Message</span></div>
+    <div class="card-body">
+      <form method="post" action="{% url 'visitors:test_whatsapp' %}">
+        {% csrf_token %}
+        <div class="grid grid-2" style="gap:16px;align-items:flex-end">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Phone Number</label>
+            <input type="text" name="test_to" class="form-control" placeholder="+254712345678" required>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Message</label>
+            <input type="text" name="test_msg" class="form-control" value="Test message from ProcureDesk Visitor System.">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-outline mt-12"><i class="bi bi-whatsapp" style="color:#25D366"></i> Send Test</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Provider guide -->
+  <div class="card" style="border-color:#dcfce7">
+    <div class="card-body" style="background:#f0fdf4;border-radius:var(--radius-lg)">
+      <div class="fw-600 mb-12" style="color:#166534"><i class="bi bi-lightbulb" style="margin-right:6px"></i>Provider Setup Guide</div>
+      <div class="grid grid-3" style="gap:16px">
+        <div>
+          <div class="fw-600 fs-12 mb-6" style="color:#166534">Twilio</div>
+          <div class="fs-12 text-muted">
+            1. Create account at <a href="https://www.twilio.com" target="_blank">twilio.com</a><br>
+            2. Enable WhatsApp sandbox or buy a number<br>
+            3. Copy <strong>Account SID</strong> + <strong>Auth Token</strong><br>
+            4. From number = your Twilio WhatsApp number<br>
+            Provider: <code>twilio</code>
+          </div>
+        </div>
+        <div>
+          <div class="fw-600 fs-12 mb-6" style="color:#166534">Meta Cloud API</div>
+          <div class="fs-12 text-muted">
+            1. Create app at <a href="https://developers.facebook.com" target="_blank">developers.facebook.com</a><br>
+            2. Add WhatsApp product<br>
+            3. Account SID = <strong>WABA ID</strong><br>
+            4. Auth Token = <strong>System User Token</strong><br>
+            Provider: <code>meta</code>
+          </div>
+        </div>
+        <div>
+          <div class="fw-600 fs-12 mb-6" style="color:#166534">Custom REST</div>
+          <div class="fs-12 text-muted">
+            Use any REST API that accepts:<br>
+            <code>POST {api_url}</code><br>
+            Body: <code>{"to":"+254...", "message":"..."}</code><br>
+            Set API key in <strong>API Key</strong> field (sent as Bearer token).<br>
+            Provider: <code>custom</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'tickets:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {{ page_title }}
+{% endblock %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <div class="grid grid-main">
+
+    <!-- Left: fields -->
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Ticket Details</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Title <span class="req">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <div class="form-error">{{ form.title.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description <span class="req">*</span></label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="form-error">{{ form.description.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="grid grid-2" style="gap:16px">
+            <div class="form-group">
+              <label class="form-label">
+                Department <span class="req">*</span>
+              </label>
+              {{ form.department }}
+              {% if form.department.errors %}
+                <div class="form-error">{{ form.department.errors }}</div>
+              {% endif %}
+              <div class="form-hint">The department responsible for resolving this ticket.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              {{ form.priority }}
+            </div>
+            <div class="form-group" style="grid-column:span 2">
+              <label class="form-label">Expected Resolution Date</label>
+              {{ form.expected_resolution_date }}
+              <div class="form-hint">Optional. Used to flag overdue tickets.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional PO link -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <i class="bi bi-link-45deg" style="margin-right:6px;color:var(--brand)"></i>
+            Link to Purchase Order
+            <span class="badge badge-draft" style="font-size:10px;margin-left:6px">Optional</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <p class="text-muted fs-12 mb-12">
+            Link this ticket to an approved purchase order if the issue is related to a PO.
+            This field is entirely optional — most tickets will not need a PO link.
+          </p>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Purchase Order</label>
+            {{ form.purchase_order }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: submit -->
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Submit</span></div>
+        <div class="card-body">
+          <p class="text-muted fs-12 mb-16">
+            The ticket will be assigned to the selected department.
+            Notification emails will be sent to the department's HOD and permissioned users.
+          </p>
+          <button type="submit" class="btn btn-primary btn-block mb-8">
+            <i class="bi bi-ticket"></i>
+            {% if "Edit" in page_title %}Update Ticket{% else %}Submit Ticket{% endif %}
+          </button>
+          <a href="{% url 'tickets:list' %}" class="btn btn-ghost btn-block">Cancel</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</form>
+{% endblock %}

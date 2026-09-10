@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}{{ grn.grn_number }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'stores:received_list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {{ grn.grn_number }}
+{% endblock %}
+{% block topbar_actions %}
+  {% if grn.status == 'PARTIAL' and request.user.is_storekeeper or request.user.is_staff %}
+    <a href="{% url 'stores:grn_update' grn.pk %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-pencil"></i> Update Quantities
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-main">
+  <div>
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="fw-600" style="font-size:15px">{{ grn.purchase_order.po_number }} — {{ grn.purchase_order.title }}</div>
+          <div class="text-muted fs-12 mt-4">
+            <i class="bi bi-building" style="margin-right:4px"></i>{{ grn.purchase_order.department }}
+            &nbsp;·&nbsp; Requester: {{ grn.purchase_order.requester.get_full_name }}
+          </div>
+        </div>
+        {% if grn.status == 'COMPLETE' %}
+          <span class="badge badge-approved"><i class="bi bi-check-circle"></i> Fully Received</span>
+        {% else %}
+          <span class="badge badge-partial"><i class="bi bi-hourglass-split"></i> Partially Received</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">Items Received</span></div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th><th>Description</th><th>UOM</th>
+              <th class="center">Qty Ordered</th>
+              <th class="center">Qty Received</th>
+              <th class="center">Outstanding</th>
+              <th>Condition</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in grn.grn_items.all %}
+            <tr {% if not line.is_fully_received %}style="background:#fffbf0"{% endif %}>
+              <td><span class="code">{{ line.code }}</span></td>
+              <td class="fw-600">{{ line.description }}</td>
+              <td class="text-muted fs-12">{{ line.uom }}</td>
+              <td class="center">{{ line.qty_ordered }}</td>
+              <td class="center fw-600 {% if line.is_fully_received %}text-success{% else %}text-warn{% endif %}">
+                {{ line.qty_received }}
+              </td>
+              <td class="center fs-12 {% if line.qty_outstanding > 0 %}text-warn fw-600{% else %}text-muted{% endif %}">
+                {{ line.qty_outstanding }}
+              </td>
+              <td class="fs-12 text-muted">{{ line.condition|default:"—" }}</td>
+              <td class="fs-12 text-muted">{{ line.notes|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-muted text-center" style="padding:24px">No items recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if grn.notes %}
+      <div class="card-footer">
+        <span class="text-muted fs-12"><i class="bi bi-chat-text" style="margin-right:6px"></i>{{ grn.notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <div class="card mb-16">
+      <div class="card-header"><span class="card-title">GRN Details</span></div>
+      <div class="card-body">
+        <div class="form-group">
+          <div class="fs-12 text-muted fw-600 mb-4">GRN Number</div>
+          <div class="code">{{ grn.grn_number }}</div>
+        </div>
+        <div class="form-group">
+          <div class="fs-12 text-muted fw-600 mb-4">Received By</div>
+          <div>{{ grn.received_by.get_full_name }}</div>
+        </div>
+        <div class="form-group">
+          <div class="fs-12 text-muted fw-600 mb-4">Date Received</div>
+          <div class="text-muted fs-12">{{ grn.received_at|date:"d M Y H:i" }}</div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <div class="fs-12 text-muted fw-600 mb-4">Status</div>
+          {% if grn.status == 'COMPLETE' %}
+            <span class="badge badge-approved">Fully Received</span>
+          {% else %}
+            <span class="badge badge-partial">Partially Received</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if grn.status == 'PARTIAL' %}
+    {% if request.user.is_storekeeper or request.user.is_staff %}
+    <div class="action-panel warning">
+      <div class="action-panel-header"><i class="bi bi-hourglass-split"></i> Outstanding Items</div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-8">Some items have not been fully received. Update when the remaining goods arrive.</p>
+        <a href="{% url 'stores:grn_update' grn.pk %}" class="btn btn-warning btn-block btn-sm">
+          <i class="bi bi-pencil"></i> Update Received Quantities
+        </a>
+      </div>
+    </div>
+    {% else %}
+    <div class="action-panel warning">
+      <div class="action-panel-header"><i class="bi bi-hourglass-split"></i> Partial Delivery</div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-0">Some items are still outstanding. The storekeeper will update this record when the remaining goods arrive.</p>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

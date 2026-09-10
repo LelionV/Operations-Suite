@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Assets{% endblock %}
+{% block topbar_title %}My Devices & Assets{% endblock %}
+{% block topbar_actions %}
+  {% if can_manage %}<a href="{% url 'assets:export' %}" class="btn btn-outline btn-sm"><i class="bi bi-download"></i> Export Excel</a>{% endif %}
+  {% if can_manage or request.user.is_hod %}<a href="{% url 'assets:list' %}" class="btn btn-outline btn-sm"><i class="bi bi-list-check"></i> Full Register</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid grid-4 mb-24" style="gap:14px">
+  <div class="stat-card" style="border-left:4px solid var(--accent)">
+    <div class="stat-icon" style="background:var(--accent-light)"><i class="bi bi-laptop" style="color:var(--accent)"></i></div>
+    <div class="stat-label">Total</div><div class="stat-value">{{ total }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--brand)">
+    <div class="stat-icon" style="background:var(--brand-light)"><i class="bi bi-check-circle" style="color:var(--brand)"></i></div>
+    <div class="stat-label">Active</div><div class="stat-value" style="color:var(--brand)">{{ active }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #f59e0b">
+    <div class="stat-icon" style="background:#fffbeb"><i class="bi bi-tools" style="color:#f59e0b"></i></div>
+    <div class="stat-label">Under Repair</div><div class="stat-value" style="color:#f59e0b">{{ under_repair }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--muted)">
+    <div class="stat-icon" style="background:#f8fafc"><i class="bi bi-inbox" style="color:var(--muted)"></i></div>
+    <div class="stat-label">Unallocated</div><div class="stat-value">{{ unallocated }}</div>
+  </div>
+</div>
+{% if my_assets %}
+<div class="card mb-16">
+  <div class="card-header"><span class="card-title"><i class="bi bi-person-check" style="margin-right:6px;color:var(--brand)"></i>My Allocated Devices</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Tag</th><th>Name</th><th>Category</th><th>Brand / Model</th><th>Condition</th><th>Department</th><th>Location</th><th>Since</th><th></th></tr></thead>
+      <tbody>
+        {% for a in my_assets %}
+        <tr>
+          <td><span class="code">{{ a.asset_tag }}</span></td>
+          <td class="fw-600">{{ a.name }}</td>
+          <td class="text-muted fs-12">{{ a.category }}</td>
+          <td class="text-muted fs-12">{{ a.brand }}{% if a.model_number %} / {{ a.model_number }}{% endif %}</td>
+          <td><span class="badge badge-{% if a.condition == 'EXCELLENT' or a.condition == 'GOOD' %}approved{% elif a.condition == 'FAIR' %}hod{% else %}rejected{% endif %}" style="font-size:10px">{{ a.get_condition_display }}</span></td>
+          <td class="text-muted fs-12">{{ a.department|default:"—" }}</td>
+          <td class="text-muted fs-12">{{ a.location|default:"—" }}</td>
+          <td class="text-muted fs-12">{{ a.allocated_at|date:"d M Y"|default:"—" }}</td>
+          <td><a href="{% url 'assets:detail' a.pk %}" class="btn btn-outline btn-sm py-0">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card mb-16">
+  <div class="card-body">
+    <div class="empty-state" style="padding:32px">
+      <div class="empty-icon"><i class="bi bi-laptop"></i></div>
+      <p>No devices are currently allocated to you.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px">
+  {% if by_category %}
+  <div class="card">
+    <div class="card-header"><span class="card-title">By Category</span></div>
+    <div class="card-body" style="padding:12px 16px">
+      {% for row in by_category %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span class="fs-13">{{ row.category__name|default:"Uncategorised" }}</span><span class="tag">{{ row.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% if warranty_expiring %}
+  <div class="card" style="border-top:3px solid #f59e0b">
+    <div class="card-header"><span class="card-title" style="color:#92400e"><i class="bi bi-shield-exclamation" style="margin-right:6px"></i>Warranty Expiring Soon</span></div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Tag</th><th>Name</th><th>Allocated To</th><th>Expires</th></tr></thead>
+        <tbody>
+          {% for a in warranty_expiring %}
+          <tr><td><span class="code">{{ a.asset_tag }}</span></td><td class="fw-600 fs-12">{{ a.name }}</td>
+            <td class="text-muted fs-12">{{ a.allocated_to.get_full_name|default:"—" }}</td>
+            <td class="fs-12 fw-600" style="color:#92400e">{{ a.warranty_expiry|date:"d M Y" }}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% if recent_mutations %}
+<div class="card mt-16">
+  <div class="card-header"><span class="card-title">Recent Activity</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Asset</th><th>Action</th><th>By</th><th>From</th><th>To</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for m in recent_mutations %}
+        <tr>
+          <td><a href="{% url 'assets:detail' m.asset.pk %}" class="code" style="font-size:12px">{{ m.asset.asset_tag }}</a></td>
+          <td class="fs-12"><span class="tag">{{ m.get_mutation_type_display }}</span></td>
+          <td class="text-muted fs-12">{{ m.actor.get_full_name|default:m.actor.username }}</td>
+          <td class="text-muted fs-12">{{ m.from_user.get_full_name|default:m.from_department.name|default:"—" }}</td>
+          <td class="text-muted fs-12">{{ m.to_user.get_full_name|default:m.to_department.name|default:"—" }}</td>
+          <td class="text-muted fs-12">{{ m.created_at|date:"d M Y H:i" }}</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

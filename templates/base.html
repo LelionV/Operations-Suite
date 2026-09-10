@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Operations Suite{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  {% load static %}<link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <a href="/pos/">
+      <span class="logo-icon"><i class="bi bi-grid-3x3-gap" style="color:#fff;font-size:17px"></i></span>
+      Operations Suite
+    </a>
+  </div>
+  <nav class="sidebar-nav">
+
+    <!-- ── ProcureDesk ─────────────────────────────────── -->
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.6)">Purchasing</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'purchase_orders' %}active{% endif %}" href="/pos/"><i class="bi bi-file-text nav-icon"></i> Purchase Orders</a>
+      <a class="nav-item {% if request.resolver_match.url_name == 'received_list' %}active{% endif %}" href="{% url 'stores:received_list' %}"><i class="bi bi-bag-check nav-icon"></i> Received Items</a>
+      {% if request.user.is_procurement_officer or request.user.is_staff %}
+      <a class="nav-item {% if request.resolver_match.app_name == 'procurement' %}active{% endif %}" href="/procurement/"><i class="bi bi-cart3 nav-icon"></i> Procurement</a>
+      {% endif %}
+      {% if request.user.is_storekeeper or request.user.is_staff %}
+      <a class="nav-item {% if request.resolver_match.app_name == 'stores' and request.resolver_match.url_name != 'received_list' %}active{% endif %}" href="/stores/"><i class="bi bi-box-seam nav-icon"></i> Stores</a>
+      {% endif %}
+    </div>
+
+    {% if request.user.has_ticket_access %}
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.6)">Help Desk</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'tickets' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="/tickets/"><i class="bi bi-speedometer2 nav-icon"></i> Ticket Dashboard</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'tickets' and request.resolver_match.url_name == 'list' %}active{% endif %}" href="/tickets/list/"><i class="bi bi-ticket-detailed nav-icon"></i> All Tickets</a>
+      {% if not request.user.is_ticket_viewer %}
+      <a class="nav-item {% if request.resolver_match.url_name == 'create' and request.resolver_match.app_name == 'tickets' %}active{% endif %}" href="/tickets/new/"><i class="bi bi-plus-circle nav-icon"></i> New Ticket</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.6)">Visitors</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'visitors' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="/visitors/"><i class="bi bi-person-badge nav-icon"></i> Visitor Dashboard</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'visitors' and request.resolver_match.url_name == 'list' %}active{% endif %}" href="/visitors/list/"><i class="bi bi-calendar-check nav-icon"></i> Appointments</a>
+      <a class="nav-item" href="/visitors/new/"><i class="bi bi-person-plus nav-icon"></i> Book Appointment</a>
+      {% if request.user.is_staff %}
+      <a class="nav-item {% if request.resolver_match.url_name == 'whatsapp_config' %}active{% endif %}" href="/visitors/whatsapp/"><i class="bi bi-whatsapp nav-icon"></i> WhatsApp Config</a>
+      {% endif %}
+    </div>
+
+    {% if request.user.is_stock_manager or request.user.is_procurement_officer or request.user.is_staff %}
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.6)">Stock & Assets</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'stock' %}active{% endif %}" href="/stock/"><i class="bi bi-bar-chart nav-icon"></i> Stock</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'assets' %}active{% endif %}" href="/assets/"><i class="bi bi-laptop nav-icon"></i> Assets</a>
+    </div>
+    {% endif %}
+
+    <!-- ── OSH / EHS ───────────────────────────────────── -->
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.55);border-top:1px solid rgba(255,255,255,.1);padding-top:10px;margin-top:4px">OSH / EHS</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}" href="/osh/"><i class="bi bi-shield-check nav-icon"></i> OSH Dashboard</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'compliance' %}active{% endif %}" href="/compliance/"><i class="bi bi-journal-check nav-icon"></i> Compliance</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'policies' %}active{% endif %}" href="/policies/"><i class="bi bi-file-earmark-text nav-icon"></i> Policies & SOPs</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'risks' %}active{% endif %}" href="/risks/"><i class="bi bi-exclamation-triangle nav-icon"></i> Risk Register</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'incidents' %}active{% endif %}" href="/incidents/"><i class="bi bi-cone-striped nav-icon"></i> Incidents</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'nonconformities' %}active{% endif %}" href="/nonconformities/"><i class="bi bi-x-octagon nav-icon"></i> Non-Conformities</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'actions' %}active{% endif %}" href="/capa/"><i class="bi bi-check2-square nav-icon"></i> CAPA</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.55)">Equipment & PPE</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'equipment' %}active{% endif %}" href="/hse-equipment/"><i class="bi bi-tools nav-icon"></i> HSE Equipment</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'inspections' %}active{% endif %}" href="/inspections/"><i class="bi bi-clipboard2-check nav-icon"></i> Inspections</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'maintenance' %}active{% endif %}" href="/maintenance/"><i class="bi bi-wrench nav-icon"></i> Maintenance</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'ppe' %}active{% endif %}" href="/ppe/"><i class="bi bi-person-badge nav-icon"></i> PPE</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.55)">People & Audit</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'training' %}active{% endif %}" href="/training/"><i class="bi bi-mortarboard nav-icon"></i> Training</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'audits' %}active{% endif %}" href="/audits/"><i class="bi bi-search nav-icon"></i> Audits</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'licenses' %}active{% endif %}" href="/licenses/"><i class="bi bi-award nav-icon"></i> Licenses</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'contractors' %}active{% endif %}" href="/contractors/"><i class="bi bi-people nav-icon"></i> Contractors</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.55)">Environment & Safety</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'environmental' %}active{% endif %}" href="/environmental/"><i class="bi bi-tree nav-icon"></i> Environmental</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'chemicals' %}active{% endif %}" href="/chemicals/"><i class="bi bi-droplet nav-icon"></i> Chemicals</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'emergency' %}active{% endif %}" href="/emergency/"><i class="bi bi-fire nav-icon"></i> Emergency</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'evidence' %}active{% endif %}" href="/evidence/"><i class="bi bi-folder2 nav-icon"></i> Evidence</a>
+    </div>
+
+    {% if request.user.is_staff or request.user.is_head_approver %}
+    <div class="nav-section">
+      <div class="nav-section-label" style="color:rgba(255,255,255,.55)">System</div>
+      <a class="nav-item {% if request.resolver_match.app_name == 'inventory' %}active{% endif %}" href="/inventory/"><i class="bi bi-database nav-icon"></i> QB Items</a>
+      <a class="nav-item {% if request.resolver_match.app_name == 'departments' %}active{% endif %}" href="/departments/"><i class="bi bi-building nav-icon"></i> Departments</a>
+      {% if request.user.is_staff %}
+      <a class="nav-item {% if request.resolver_match.app_name == 'settings_manager' %}active{% endif %}" href="/system/email/"><i class="bi bi-envelope-gear nav-icon"></i> Email Settings</a>
+      <a class="nav-item" href="/admin/"><i class="bi bi-gear nav-icon"></i> Admin Panel</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+        <div class="sidebar-user-role" style="font-size:10px">{{ request.user.get_role_display }}</div>
+      </div>
+      <div style="position:relative">
+        <button class="btn-logout" id="bell-btn" title="Notifications"><i class="bi bi-bell"></i>
+          <span id="bell-badge" style="position:absolute;top:-4px;right:-4px;background:#c0392b;color:#fff;font-size:9px;border-radius:10px;padding:1px 4px;display:none">0</span>
+        </button>
+      </div>
+      <form method="post" action="{% url 'accounts:logout' %}" style="margin:0">
+        {% csrf_token %}<button class="btn-logout" title="Logout"><i class="bi bi-box-arrow-right"></i></button>
+      </form>
+    </div>
+  </div>
+</aside>
+
+<div id="notif-panel" style="display:none;position:fixed;bottom:64px;left:230px;width:320px;background:#fff;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.16);z-index:9999;border:1px solid var(--border);overflow:hidden">
+  <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-weight:600;font-size:13px">Notifications</span>
+    <button id="mark-all-btn" style="font-size:11px;color:var(--brand);background:none;border:none;cursor:pointer">Mark all read</button>
+  </div>
+  <div id="notif-list" style="max-height:360px;overflow-y:auto"></div>
+</div>
+
+<div class="main-content">
+  <header class="topbar">
+    <div class="topbar-title">{% block topbar_title %}{% endblock %}</div>
+    <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+  </header>
+  <main class="page-body">
+    {% if messages %}{% for m in messages %}
+      <div class="alert alert-{% if m.tags == 'error' %}danger{% elif m.tags == 'warning' %}warning{% elif m.tags == 'success' %}success{% else %}info{% endif %}">
+        <i class="bi bi-{% if m.tags == 'error' or m.tags == 'danger' %}exclamation-circle{% elif m.tags == 'success' %}check-circle{% elif m.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+        <span>{{ m }}</span><button class="alert-close" onclick="this.parentElement.remove()">×</button>
+      </div>
+    {% endfor %}{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</div>
+{% block extra_js %}{% endblock %}
+<script>
+const bell=document.getElementById('bell-btn'),badge=document.getElementById('bell-badge'),
+      panel=document.getElementById('notif-panel'),list=document.getElementById('notif-list'),
+      markAll=document.getElementById('mark-all-btn'),CSRF='{{ csrf_token }}';
+function renderNotifs(d){
+  badge.textContent=d.unread;badge.style.display=d.unread>0?'block':'none';
+  if(!d.notifications.length){list.innerHTML='<p style="padding:20px;text-align:center;color:#94a3b8;font-size:13px">No notifications</p>';return;}
+  list.innerHTML=d.notifications.map(n=>`<div onclick="clickN(${n.id},'${n.link}')" style="padding:10px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;background:${n.is_read?'#fff':'#eff6ff'}">
+    <div style="font-weight:600;font-size:12px">${n.title}</div>
+    ${n.body?`<div style="font-size:11px;color:#94a3b8;margin-top:2px">${n.body.substring(0,70)}...</div>`:''}
+    <div style="font-size:10px;color:#cbd5e1;margin-top:3px">${n.created_at}</div>
+  </div>`).join('');
+}
+function clickN(pk,link){fetch(`/notify/${pk}/read/`,{method:'POST',headers:{'X-CSRFToken':CSRF}});if(link)window.location.href=link;else panel.style.display='none';}
+function fetchN(){fetch('/notify/').then(r=>r.json()).then(renderNotifs).catch(()=>{});}
+bell.addEventListener('click',e=>{e.stopPropagation();panel.style.display=panel.style.display==='none'?'block':'none';if(panel.style.display==='block')fetchN();});
+document.addEventListener('click',()=>{panel.style.display='none';});
+panel.addEventListener('click',e=>e.stopPropagation());
+markAll.addEventListener('click',()=>{fetch('/notify/read-all/',{method:'POST',headers:{'X-CSRFToken':CSRF}}).then(fetchN);});
+(function poll(){fetch('/notify/unread/').then(r=>r.json()).then(d=>{badge.textContent=d.count;badge.style.display=d.count>0?'block':'none';}).catch(()=>{});setTimeout(poll,60000);})();
+</script>
+</body></html>

@@ -1,0 +1,10 @@
+{% if status == 'DRAFT' %}<span class="badge badge-draft">{{ label }}</span>
+{% elif status == 'PENDING_HOD' %}<span class="badge badge-hod">{{ label }}</span>
+{% elif status == 'PENDING_HEAD' %}<span class="badge badge-head">{{ label }}</span>
+{% elif status == 'APPROVED' %}<span class="badge badge-approved">{{ label }}</span>
+{% elif status == 'SENT_PROC' %}<span class="badge badge-proc">{{ label }}</span>
+{% elif status == 'ORDERED' %}<span class="badge badge-ordered">{{ label }}</span>
+{% elif status == 'RECEIVED' %}<span class="badge badge-received">{{ label }}</span>
+{% elif status == 'REJECTED' %}<span class="badge badge-rejected">{{ label }}</span>
+{% elif status == 'CANCELLED' %}<span class="badge badge-cancelled">{{ label }}</span>
+{% else %}<span class="badge">{{ label }}</span>{% endif %}

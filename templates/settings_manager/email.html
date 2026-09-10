@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load settings_tags %}
+{% block title %}Email Settings{% endblock %}
+{% block topbar_title %}Email Settings{% endblock %}
+
+{% block content %}
+<div style="max-width:760px">
+
+  <div class="card mb-16">
+    <div class="card-header">
+      <span class="card-title"><i class="bi bi-envelope-gear" style="margin-right:8px;color:var(--brand)"></i>SMTP Email Configuration</span>
+      {% with enabled_setting=field_map|get_item:'email_enabled' %}
+        {% if enabled_setting and enabled_setting.value == 'true' %}
+          <span class="badge badge-approved"><i class="bi bi-check-circle"></i> Enabled</span>
+        {% else %}
+          <span class="badge badge-cancelled">Disabled</span>
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div class="card-body">
+      <p class="text-muted fs-13 mb-16">
+        Configure the SMTP server used to send PO notification emails.
+        Changes take effect immediately — no server restart needed.
+        Leave email <strong>disabled</strong> while setting up, then enable and send a test.
+      </p>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <!-- Enable toggle -->
+        <div class="card mb-16" style="border-color:var(--brand-light);background:var(--brand-light)">
+          <div class="card-body" style="padding:14px 18px">
+            <div class="d-flex align-center justify-between">
+              <div>
+                <div class="fw-600 fs-13">Enable Email Notifications</div>
+                <div class="text-muted fs-12">Turn on to send emails via the SMTP settings below.</div>
+              </div>
+              {% with s=field_map|get_item:'email_enabled' %}
+              <select name="email_enabled" class="form-select" style="width:auto">
+                <option value="false" {% if not s or s.value != 'true' %}selected{% endif %}>Disabled</option>
+                <option value="true"  {% if s and s.value == 'true' %}selected{% endif %}>Enabled</option>
+              </select>
+              {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <!-- SMTP fields -->
+        <div class="grid grid-2" style="gap:16px;margin-bottom:16px">
+
+          <div style="grid-column:span 2" class="form-group">
+            <label class="form-label">From Email Address</label>
+            {% with s=field_map|get_item:'email_from' %}
+            <input type="text" name="email_from" class="form-control"
+                   value="{{ s.value|default:'' }}"
+                   placeholder="e.g. noreply@mycompany.com">
+            {% endwith %}
+            <div class="form-hint">The sender address shown on all outgoing emails.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SMTP Host</label>
+            {% with s=field_map|get_item:'email_host' %}
+            <input type="text" name="email_host" class="form-control"
+                   value="{{ s.value|default:'' }}"
+                   placeholder="e.g. smtp.gmail.com">
+            {% endwith %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SMTP Port</label>
+            {% with s=field_map|get_item:'email_port' %}
+            <input type="text" name="email_port" class="form-control"
+                   value="{{ s.value|default:'587' }}"
+                   placeholder="587">
+            {% endwith %}
+            <div class="form-hint">587 (TLS), 465 (SSL), or 25 (plain).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SMTP Username</label>
+            {% with s=field_map|get_item:'email_host_user' %}
+            <input type="text" name="email_host_user" class="form-control"
+                   value="{{ s.value|default:'' }}"
+                   placeholder="your@email.com">
+            {% endwith %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SMTP Password / App Password</label>
+            <input type="password" name="email_host_password" class="form-control"
+                   placeholder="Leave blank to keep existing password"
+                   autocomplete="new-password">
+            <div class="form-hint">For Gmail, use an App Password (not your account password).</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Use TLS</label>
+            {% with s=field_map|get_item:'email_use_tls' %}
+            <select name="email_use_tls" class="form-select">
+              <option value="true"  {% if not s or s.value != 'false' %}selected{% endif %}>Yes (recommended for port 587)</option>
+              <option value="false" {% if s and s.value == 'false' %}selected{% endif %}>No</option>
+            </select>
+            {% endwith %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Use SSL</label>
+            {% with s=field_map|get_item:'email_use_ssl' %}
+            <select name="email_use_ssl" class="form-select">
+              <option value="false" {% if not s or s.value != 'true' %}selected{% endif %}>No (recommended)</option>
+              <option value="true"  {% if s and s.value == 'true' %}selected{% endif %}>Yes (for port 465)</option>
+            </select>
+            {% endwith %}
+            <div class="form-hint">Do not enable both TLS and SSL.</div>
+          </div>
+
+        </div>
+
+        <div class="d-flex gap-12">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save"></i> Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Test email -->
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title"><i class="bi bi-send" style="margin-right:6px"></i>Send Test Email</span></div>
+    <div class="card-body">
+      <p class="text-muted fs-13 mb-16">
+        Send a test message to confirm your SMTP settings are working.
+        Email must be <strong>enabled</strong> above first.
+      </p>
+      <form method="post" action="{% url 'settings_manager:test_email' %}">
+        {% csrf_token %}
+        <div class="d-flex gap-12 align-center">
+          <div style="flex:1;max-width:380px">
+            <input type="email" name="test_email_to" class="form-control"
+                   placeholder="recipient@example.com" required>
+          </div>
+          <button type="submit" class="btn btn-outline">
+            <i class="bi bi-send"></i> Send Test
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Provider guide -->
+  <div class="card" style="border-color:#e0e7ff">
+    <div class="card-body" style="background:#f5f7ff;border-radius:var(--radius-lg)">
+      <div class="fw-600 mb-12" style="color:var(--brand)">
+        <i class="bi bi-lightbulb" style="margin-right:6px"></i>Common Provider Settings
+      </div>
+      <div class="grid grid-2" style="gap:16px">
+        <div>
+          <div class="fw-600 fs-12 mb-4">Gmail</div>
+          <div class="fs-12 text-muted">
+            Host: <code>smtp.gmail.com</code><br>
+            Port: <code>587</code> · TLS: Yes<br>
+            Username: your Gmail address<br>
+            Password: <a href="https://myaccount.google.com/apppasswords" target="_blank">Generate App Password</a>
+          </div>
+        </div>
+        <div>
+          <div class="fw-600 fs-12 mb-4">Office 365 / Outlook</div>
+          <div class="fs-12 text-muted">
+            Host: <code>smtp.office365.com</code><br>
+            Port: <code>587</code> · TLS: Yes<br>
+            Username: your Microsoft email
+          </div>
+        </div>
+        <div>
+          <div class="fw-600 fs-12 mb-4">SendGrid</div>
+          <div class="fs-12 text-muted">
+            Host: <code>smtp.sendgrid.net</code><br>
+            Port: <code>587</code> · TLS: Yes<br>
+            Username: <code>apikey</code> · Password: your API key
+          </div>
+        </div>
+        <div>
+          <div class="fw-600 fs-12 mb-4">Mailgun</div>
+          <div class="fs-12 text-muted">
+            Host: <code>smtp.mailgun.org</code><br>
+            Port: <code>587</code> · TLS: Yes<br>
+            Username: your Mailgun SMTP login
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

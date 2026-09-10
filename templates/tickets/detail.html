@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block title %}{{ ticket.code }}{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'tickets:list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  {{ ticket.code }}
+{% endblock %}
+{% block topbar_actions %}
+  {% if can_manage %}
+    <a href="{% url 'tickets:edit' ticket.pk %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-pencil"></i> Edit
+    </a>
+  {% endif %}
+  {% if can_close %}
+    <form method="post" action="{% url 'tickets:close' ticket.pk %}" style="margin:0"
+          onsubmit="return confirm('Close this ticket?')">
+      {% csrf_token %}
+      <button class="btn btn-ghost btn-sm" style="color:var(--muted)">
+        <i class="bi bi-x-circle"></i> Close
+      </button>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-main">
+
+  <!-- Left: ticket body -->
+  <div>
+
+    <!-- Summary card -->
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="fw-600" style="font-size:15px">{{ ticket.title }}</div>
+          <div class="text-muted fs-12 mt-4">
+            Raised by
+            <strong>{{ ticket.created_by.get_full_name|default:ticket.created_by.username }}</strong>
+            on {{ ticket.created_at|date:"d M Y H:i" }}
+            {% if ticket.department %}
+              &nbsp;·&nbsp;
+              <i class="bi bi-building"></i> {{ ticket.department }}
+            {% endif %}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge badge-{{ ticket.status_css }}">
+            {{ ticket.get_status_display }}
+          </span>
+          <span class="badge badge-{{ ticket.priority_css }}" style="font-size:10px">
+            {{ ticket.get_priority_display }} Priority
+          </span>
+          {% if ticket.is_overdue %}
+            <span class="badge badge-rejected" style="font-size:10px">
+              <i class="bi bi-alarm"></i> {{ ticket.overdue_days }}d overdue
+            </span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="fs-13" style="white-space:pre-wrap;line-height:1.7">{{ ticket.description }}</div>
+      </div>
+      {% if ticket.purchase_order %}
+      <div class="card-footer" style="background:var(--brand-light)">
+        <div class="d-flex align-center gap-12">
+          <i class="bi bi-link-45deg" style="color:var(--brand);font-size:18px"></i>
+          <div>
+            <div class="fs-12 text-muted fw-600">Linked Purchase Order</div>
+            <div class="d-flex align-center gap-8 mt-4">
+              <a href="{% url 'purchase_orders:detail' ticket.purchase_order.pk %}"
+                 class="code" style="font-size:13px">{{ ticket.purchase_order.po_number }}</a>
+              <span class="text-muted fs-12">{{ ticket.purchase_order.title }}</span>
+              <span class="badge badge-{{ ticket.purchase_order.status_badge }}" style="font-size:10px">
+                {{ ticket.purchase_order.get_status_display }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Attachments -->
+    {% if ticket.attachments.exists %}
+    <div class="card mb-16">
+      <div class="card-header">
+        <span class="card-title">
+          <i class="bi bi-paperclip" style="margin-right:6px"></i>Attachments
+        </span>
+      </div>
+      <div class="card-body" style="display:flex;flex-wrap:wrap;gap:10px">
+        {% for att in ticket.attachments.all %}
+        <a href="{% url 'tickets:download_file' ticket.pk att.pk %}"
+           class="btn btn-outline btn-sm" style="font-size:12px">
+          <i class="bi bi-download"></i> {{ att.filename }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Activity / Comments -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Activity</span>
+        <span class="text-muted fs-12">{{ ticket.comments.count }} comment{% if ticket.comments.count != 1 %}s{% endif %}</span>
+      </div>
+      <div class="card-body">
+        {% if ticket.comments.all %}
+        <div class="timeline mb-16">
+          {% for comment in ticket.comments.all %}
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-body">
+              <div class="d-flex justify-between align-center">
+                <span class="fw-600 fs-13">
+                  {{ comment.sender.get_full_name|default:comment.sender.username }}
+                </span>
+                <span class="tl-meta">{{ comment.created_at|date:"d M Y H:i" }}</span>
+              </div>
+              <div class="fs-13 mt-4" style="white-space:pre-wrap;line-height:1.6">
+                {{ comment.message }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted fs-13 mb-16">No comments yet. Be the first to add one.</p>
+        {% endif %}
+
+        <!-- Add comment form — visible to all with access; viewers can comment but not change status -->
+        <div class="divider"></div>
+        <form method="post" action="{% url 'tickets:add_comment' ticket.pk %}"
+              enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Add Comment</label>
+            <textarea name="message" class="form-control" rows="3"
+                      placeholder="Add a comment, note or update…" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              Attachments <span class="text-muted" style="font-weight:400">(optional)</span>
+            </label>
+            <input type="file" name="attachments" class="form-control" multiple>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-chat-text"></i> Post Comment
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right: metadata + actions -->
+  <div>
+
+    <!-- Ticket metadata -->
+    <div class="card mb-16">
+      <div class="card-header"><span class="card-title">Ticket Info</span></div>
+      <div style="padding:0">
+        {% for label, value in ticket_meta %}
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border);
+                    display:flex;justify-content:space-between;align-items:center">
+          <span class="fs-12 fw-600 text-muted">{{ label }}</span>
+          <span class="fs-12">{{ value }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Status update (HOD, permissioned users, staff — not ticket_viewers) -->
+    {% if can_manage %}
+    <div class="action-panel primary mb-16">
+      <div class="action-panel-header">
+        <i class="bi bi-arrow-repeat"></i> Update Status
+      </div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-12">
+          Update the ticket status. A notification will be sent to the creator and dept team.
+        </p>
+        <form method="post" action="{% url 'tickets:update_status' ticket.pk %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            {{ status_form.status }}
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-sm">
+            <i class="bi bi-check"></i> Update Status
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Close ticket (creator once resolved, or staff) -->
+    {% if can_close %}
+    <div class="action-panel success mb-16">
+      <div class="action-panel-header">
+        <i class="bi bi-check2-all"></i> Close Ticket
+      </div>
+      <div class="action-panel-body">
+        <p class="text-muted fs-12 mb-8">
+          Confirm the issue has been resolved to your satisfaction.
+        </p>
+        <form method="post" action="{% url 'tickets:close' ticket.pk %}"
+              onsubmit="return confirm('Close this ticket?')">
+          {% csrf_token %}
+          <button class="btn btn-success btn-block btn-sm">
+            <i class="bi bi-check2-all"></i> Mark as Closed
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Viewer info badge -->
+    {% if request.user.is_ticket_viewer %}
+    <div class="card" style="border-color:var(--brand-light)">
+      <div class="card-body" style="background:var(--brand-light);border-radius:var(--radius-lg);text-align:center">
+        <i class="bi bi-eye" style="font-size:20px;color:var(--brand)"></i>
+        <div class="fw-600 fs-12 mt-8" style="color:var(--brand)">View-Only Access</div>
+        <div class="text-muted fs-12 mt-4">
+          You can view all tickets and add comments, but cannot change statuses.
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

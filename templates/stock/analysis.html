@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Stock Analysis{% endblock %}
+{% block topbar_title %}Stock Analysis{% endblock %}
+{% block topbar_actions %}<a href="{% url 'stock:report' %}" class="btn btn-primary btn-sm"><i class="bi bi-download"></i> Download Excel Report</a>{% endblock %}
+{% block extra_head %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>{% endblock %}
+{% block content %}
+<div class="grid grid-4 mb-24" style="gap:14px">
+  {% for action,count in action_counts.items %}
+  <div class="stat-card"><div class="stat-label">{{ action }}</div><div class="stat-value">{{ count }}</div></div>
+  {% endfor %}
+</div>
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+  <div class="card"><div class="card-header"><span class="card-title">Monthly Usage — All Items</span></div><div class="card-body"><canvas id="usageChart" height="200"></canvas></div></div>
+  <div class="card"><div class="card-header"><span class="card-title">Stock Status Breakdown</span></div><div class="card-body" style="display:flex;align-items:center;justify-content:center"><canvas id="statusChart" height="200" style="max-width:260px"></canvas></div></div>
+</div>
+<div class="card mb-20">
+  <div class="card-header"><span class="card-title">Top 10 Items by Average Monthly Usage</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Code</th><th>Description</th><th class="num">Avg/Month</th><th class="num">Annual</th><th class="num">Current Stock</th><th class="center">Cover (mo)</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for item in top_usage %}
+        <tr>
+          <td class="text-muted">{{ forloop.counter }}</td>
+          <td><span class="code">{{ item.qb_code }}</span></td>
+          <td class="fw-600">{{ item.description }}</td>
+          <td class="num fw-600">{{ item.monthly_moving_average|floatformat:1 }}</td>
+          <td class="num text-muted">{{ item.annual_usage|floatformat:0 }}</td>
+          <td class="num {% if item.current_stock == 0 %}text-danger fw-600{% endif %}">{{ item.current_stock|floatformat:0 }}</td>
+          <td class="center">{% if item.stock_cover_months is not None %}<span class="fw-600 {% if item.stock_cover_months < 1 %}text-danger{% elif item.stock_cover_months < 3 %}text-warn{% else %}text-success{% endif %}">{{ item.stock_cover_months|floatformat:1 }}</span>{% else %}—{% endif %}</td>
+          <td><span class="badge {% if item.action == 'OUT OF STOCK' or item.action == 'REORDER NOW' %}badge-rejected{% elif item.action == 'REORDER SOON' %}badge-hod{% elif item.action == 'OVERSTOCKED' %}badge-head{% elif item.action == 'WELL STOCKED' %}badge-approved{% else %}badge-draft{% endif %}" style="font-size:10px">{{ item.action }}</span></td>
+        </tr>
+        {% empty %}<tr><td colspan="8" class="text-muted text-center" style="padding:24px">No usage data.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+new Chart(document.getElementById('usageChart'),{type:'bar',data:{labels:{{ months|safe }},datasets:[{label:'Total Usage',data:{{ monthly_totals|safe }},backgroundColor:'rgba(27,63,110,0.75)',borderColor:'#1B3F6E',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
+const ac={{ action_counts|safe }};
+const cols={'OUT OF STOCK':'#ef4444','REORDER NOW':'#dc2626','REORDER SOON':'#f59e0b','OVERSTOCKED':'#3b82f6','WELL STOCKED':'#22c55e','NO USAGE DATA':'#cbd5e1'};
+new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:Object.keys(ac),datasets:[{data:Object.values(ac),backgroundColor:Object.keys(ac).map(k=>cols[k]||'#94a3b8'),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}}}}});
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}Visitors{% endblock %}
+{% block topbar_title %}Visitor Management{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'visitors:create' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-person-plus"></i> Book Appointment
+  </a>
+  <a href="{% url 'visitors:list' %}" class="btn btn-outline btn-sm">
+    <i class="bi bi-list-ul"></i> All Appointments
+  </a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI -->
+<div class="grid grid-4 mb-24" style="gap:14px">
+  <div class="stat-card" style="border-left:4px solid var(--brand)">
+    <div class="stat-icon" style="background:var(--brand-light)"><i class="bi bi-calendar-check" style="color:var(--brand)"></i></div>
+    <div class="stat-label">Total</div><div class="stat-value">{{ total }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #3b82f6">
+    <div class="stat-icon" style="background:#eff6ff"><i class="bi bi-clock" style="color:#3b82f6"></i></div>
+    <div class="stat-label">Scheduled</div><div class="stat-value" style="color:#3b82f6">{{ scheduled }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #f59e0b">
+    <div class="stat-icon" style="background:#fffbeb"><i class="bi bi-person-check" style="color:#f59e0b"></i></div>
+    <div class="stat-label">Arrived Today</div><div class="stat-value" style="color:#f59e0b">{{ arrived }}</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid var(--accent)">
+    <div class="stat-icon" style="background:var(--accent-light)"><i class="bi bi-check-circle" style="color:var(--accent)"></i></div>
+    <div class="stat-label">Completed</div><div class="stat-value" style="color:var(--accent)">{{ completed }}</div>
+  </div>
+</div>
+
+<!-- Today's appointments -->
+<div class="card mb-16" style="border-top:3px solid var(--brand)">
+  <div class="card-header">
+    <span class="card-title"><i class="bi bi-calendar-day" style="margin-right:6px;color:var(--brand)"></i>Today's Appointments — {{ today|date:"d M Y" }}</span>
+    <span class="badge badge-head">{{ today_appts|length }}</span>
+  </div>
+  {% if today_appts %}
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Ref</th><th>Visitor</th><th>Company</th><th>Host</th><th>Time</th><th>Purpose</th><th>Vehicle</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for a in today_appts %}
+        <tr {% if a.status == 'ARRIVED' %}style="background:#fffbeb"{% endif %}>
+          <td><span class="code" style="font-size:11px">{{ a.ref_number }}</span></td>
+          <td>
+            <div class="fw-600 fs-13">{{ a.visitor_name }}</div>
+            {% if a.visitor_phone %}<div class="text-muted fs-12">{{ a.visitor_phone }}</div>{% endif %}
+          </td>
+          <td class="text-muted fs-12">{{ a.visitor_company|default:"—" }}</td>
+          <td class="fs-12">{{ a.host_display }}</td>
+          <td class="fs-12 fw-600">{{ a.scheduled_start|time:"H:i" }}{% if a.scheduled_end %} — {{ a.scheduled_end|time:"H:i" }}{% endif %}</td>
+          <td class="text-muted fs-12">{{ a.agenda|truncatechars:30|default:"—" }}</td>
+          <td class="fs-12 text-muted">
+            {% if a.vehicle_plate %}<span class="code" style="font-size:11px">{{ a.vehicle_plate }}</span>{% if a.vehicle_make %} {{ a.vehicle_make }}{% endif %}{% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="badge badge-{{ a.status_css }}" style="font-size:10px">{{ a.get_status_display }}</span>
+          </td>
+          <td style="display:flex;gap:4px">
+            {% if is_gatekeeper and a.status == 'SCHEDULED' %}
+              <a href="{% url 'visitors:detail' a.pk %}" class="btn btn-success btn-sm py-0">Check In</a>
+            {% else %}
+              <a href="{% url 'visitors:detail' a.pk %}" class="btn btn-outline btn-sm py-0">View</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body">
+    <div class="empty-state" style="padding:32px">
+      <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+      <p>No appointments scheduled for today.</p>
+      <a href="{% url 'visitors:create' %}" class="btn btn-primary btn-sm">Book One Now</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px">
+  <!-- Upcoming -->
+  {% if upcoming %}
+  <div class="card">
+    <div class="card-header"><span class="card-title">Upcoming</span><a href="{% url 'visitors:list' %}" class="btn btn-ghost btn-sm">View All</a></div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Visitor</th><th>Host</th><th>Date</th><th>Time</th><th></th></tr></thead>
+        <tbody>
+          {% for a in upcoming %}
+          <tr>
+            <td>
+              <div class="fw-600 fs-13">{{ a.visitor_name }}</div>
+              <div class="text-muted fs-12">{{ a.visitor_company|default:"" }}</div>
+            </td>
+            <td class="text-muted fs-12">{{ a.host_display }}</td>
+            <td class="fs-12 fw-600">{{ a.scheduled_date|date:"d M Y" }}</td>
+            <td class="fs-12 text-muted">{{ a.scheduled_start|time:"H:i" }}</td>
+            <td><a href="{% url 'visitors:detail' a.pk %}" class="btn btn-outline btn-sm py-0">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Recent completed -->
+  {% if recent_completed %}
+  <div class="card">
+    <div class="card-header"><span class="card-title">Recent Completed / No-Shows</span></div>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Visitor</th><th>Host</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in recent_completed %}
+          <tr>
+            <td>
+              <a href="{% url 'visitors:detail' a.pk %}" class="fw-600 fs-13" style="text-decoration:none;color:inherit">{{ a.visitor_name }}</a>
+              <div class="text-muted fs-12">{{ a.visitor_company|default:"" }}</div>
+            </td>
+            <td class="text-muted fs-12">{{ a.host_display }}</td>
+            <td class="text-muted fs-12">{{ a.scheduled_date|date:"d M Y" }}</td>
+            <td><span class="badge badge-{{ a.status_css }}" style="font-size:10px">{{ a.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

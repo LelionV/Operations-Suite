@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}OSH Dashboard{% endblock %}
+{% block topbar_title %}<i class="bi bi-shield-check" style="color:var(--brand);margin-right:6px"></i>OSH Compliance Dashboard{% endblock %}
+{% block topbar_actions %}<span class="text-muted fs-12">{{ today|date:"d M Y" }}</span>{% endblock %}
+{% block content %}
+
+<!-- Compliance score banner -->
+<div class="card mb-16" style="border-left:5px solid {% if compliance_score >= 80 %}var(--accent){% elif compliance_score >= 60 %}var(--warning){% else %}var(--danger){% endif %}">
+  <div class="card-body" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div style="text-align:center;min-width:80px">
+      <div style="font-size:36px;font-weight:700;color:{% if compliance_score >= 80 %}var(--accent){% elif compliance_score >= 60 %}var(--warning){% else %}var(--danger){% endif %}">{{ compliance_score }}%</div>
+      <div class="text-muted fs-12">Compliance Score</div>
+    </div>
+    <div style="flex:1">
+      <div style="background:#f1f5f9;border-radius:20px;height:10px;overflow:hidden">
+        <div style="width:{{ compliance_score }}%;height:100%;background:{% if compliance_score >= 80 %}var(--accent){% elif compliance_score >= 60 %}var(--warning){% else %}var(--danger){% endif %};border-radius:20px;transition:width .5s"></div>
+      </div>
+      <div class="d-flex gap-16 mt-8">
+        <span class="fs-12"><span class="badge badge-approved">{{ compliance_compliant }}</span> Compliant</span>
+        <span class="fs-12"><span class="badge badge-rejected">{{ compliance_non }}</span> Non-Compliant</span>
+        <span class="fs-12 text-muted">of {{ compliance_total }} requirements</span>
+      </div>
+    </div>
+    <a href="{% url 'compliance:list' %}" class="btn btn-outline btn-sm">View All</a>
+  </div>
+</div>
+
+<!-- KPI grid -->
+<div class="grid grid-4 mb-16" style="gap:12px">
+  <div class="stat-card" style="border-left:4px solid var(--danger)">
+    <div class="stat-icon" style="background:var(--danger-light)"><i class="bi bi-cone-striped" style="color:var(--danger)"></i></div>
+    <div class="stat-label">Open Incidents</div>
+    <div class="stat-value" style="color:{% if incidents_open > 0 %}var(--danger){% else %}var(--accent){% endif %}">{{ incidents_open }}</div>
+    <div class="stat-sub">{{ incidents_month }} this month</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid {% if actions_overdue > 0 %}var(--danger){% else %}var(--warning){% endif %}">
+    <div class="stat-icon" style="background:var(--warning-light)"><i class="bi bi-check2-square" style="color:var(--warning)"></i></div>
+    <div class="stat-label">Open Actions</div>
+    <div class="stat-value" style="color:var(--warning)">{{ actions_open }}</div>
+    <div class="stat-sub {% if actions_overdue > 0 %}text-danger{% endif %}">{{ actions_overdue }} overdue</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid {% if nc_overdue > 0 %}var(--danger){% else %}#3b82f6{% endif %}">
+    <div class="stat-icon" style="background:#eff6ff"><i class="bi bi-x-octagon" style="color:#3b82f6"></i></div>
+    <div class="stat-label">Non-Conformities</div>
+    <div class="stat-value" style="color:#3b82f6">{{ nc_open }}</div>
+    <div class="stat-sub {% if nc_overdue > 0 %}text-danger{% endif %}">{{ nc_overdue }} overdue</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid {% if risks_critical > 0 %}var(--danger){% else %}var(--warning){% endif %}">
+    <div class="stat-icon" style="background:var(--warning-light)"><i class="bi bi-exclamation-triangle" style="color:var(--warning)"></i></div>
+    <div class="stat-label">Open Risks</div>
+    <div class="stat-value" style="color:var(--warning)">{{ risks_open }}</div>
+    <div class="stat-sub {% if risks_critical > 0 %}text-danger{% endif %}">{{ risks_critical }} critical · {{ risks_high }} high</div>
+  </div>
+</div>
+
+<div class="grid grid-4 mb-16" style="gap:12px">
+  <div class="stat-card" style="border-left:4px solid {% if licenses_expired > 0 %}var(--danger){% else %}var(--accent){% endif %}">
+    <div class="stat-icon" style="background:var(--accent-light)"><i class="bi bi-award" style="color:var(--accent)"></i></div>
+    <div class="stat-label">Licenses Expiring</div>
+    <div class="stat-value">{{ licenses_expiring }}</div>
+    <div class="stat-sub {% if licenses_expired > 0 %}text-danger{% endif %}">{{ licenses_expired }} expired</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid {% if equipment_inspection_due > 0 %}var(--danger){% else %}var(--brand){% endif %}">
+    <div class="stat-icon" style="background:var(--brand-light)"><i class="bi bi-tools" style="color:var(--brand)"></i></div>
+    <div class="stat-label">Equipment ({{ equipment_total }})</div>
+    <div class="stat-value {% if equipment_inspection_due > 0 %}text-danger{% endif %}">{{ equipment_inspection_due }}</div>
+    <div class="stat-sub">inspection overdue · {{ equipment_maintenance_due }} maint.</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid {% if ppe_expired > 0 %}var(--danger){% else %}#7c3aed{% endif %}">
+    <div class="stat-icon" style="background:#ede9fe"><i class="bi bi-person-badge" style="color:#7c3aed"></i></div>
+    <div class="stat-label">PPE Expiring</div>
+    <div class="stat-value" style="color:#7c3aed">{{ ppe_expiring }}</div>
+    <div class="stat-sub {% if ppe_expired > 0 %}text-danger{% endif %}">{{ ppe_expired }} expired</div>
+  </div>
+  <div class="stat-card" style="border-left:4px solid {% if training_expired > 0 %}var(--danger){% else %}#0891b2{% endif %}">
+    <div class="stat-icon" style="background:#cffafe"><i class="bi bi-mortarboard" style="color:#0891b2"></i></div>
+    <div class="stat-label">Training Expiring</div>
+    <div class="stat-value" style="color:#0891b2">{{ training_expiring }}</div>
+    <div class="stat-sub {% if training_expired > 0 %}text-danger{% endif %}">{{ training_expired }} expired</div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px">
+  <!-- Recent Incidents -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="bi bi-cone-striped" style="color:var(--danger);margin-right:6px"></i>Recent Incidents</span>
+      <a href="/incidents/" class="btn btn-ghost btn-sm">All</a>
+    </div>
+    {% if recent_incidents %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for i in recent_incidents %}
+          <tr>
+            <td class="fw-600 fs-13">{{ i.title|truncatechars:35 }}</td>
+            <td><span class="tag" style="font-size:10px">{{ i.get_incident_type_display }}</span></td>
+            <td><span class="badge badge-{{ i.severity_css }}" style="font-size:10px">{{ i.get_severity_display }}</span></td>
+            <td class="text-muted fs-12">{{ i.incident_date|date:"d M Y" }}</td>
+            <td><span class="badge badge-{{ i.status_css }}" style="font-size:10px">{{ i.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body"><div class="empty-state" style="padding:20px"><div class="empty-icon"><i class="bi bi-check-circle"></i></div><p>No recent incidents.</p></div></div>
+    {% endif %}
+  </div>
+
+  <!-- Overdue Actions -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="bi bi-clock-history" style="color:var(--warning);margin-right:6px"></i>Open Actions (by due date)</span>
+      <a href="{% url 'actions:list' %}" class="btn btn-ghost btn-sm">All</a>
+    </div>
+    {% if recent_actions %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Action</th><th>Priority</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for a in recent_actions %}
+          <tr {% if a.is_overdue %}style="background:#fff5f5"{% endif %}>
+            <td class="fw-600 fs-13">{{ a.title|truncatechars:30 }}</td>
+            <td><span class="badge badge-{{ a.priority_css }}" style="font-size:10px">{{ a.priority }}</span></td>
+            <td class="text-muted fs-12">{{ a.owner.get_full_name|default:"—" }}</td>
+            <td class="fs-12 {% if a.is_overdue %}text-danger fw-600{% else %}text-muted{% endif %}">{{ a.due_date|date:"d M Y"|default:"—" }}</td>
+            <td><span class="badge badge-{{ a.status_css }}" style="font-size:10px">{{ a.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="card-body"><div class="empty-state" style="padding:20px"><div class="empty-icon"><i class="bi bi-check2-all"></i></div><p>No open actions.</p></div></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Expiring licenses bottom row -->
+{% if expiring_licenses %}
+<div class="card mt-16" style="border-top:3px solid var(--warning)">
+  <div class="card-header"><span class="card-title"><i class="bi bi-alarm" style="color:var(--warning);margin-right:6px"></i>Licenses & Certificates Expiring (30 days)</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Title</th><th>Type</th><th>Number</th><th>Holder</th><th>Expires</th><th>Days Left</th></tr></thead>
+      <tbody>
+        {% for l in expiring_licenses %}
+        <tr>
+          <td class="fw-600 fs-13">{{ l.title }}</td>
+          <td class="text-muted fs-12">{{ l.get_license_type_display }}</td>
+          <td><span class="code" style="font-size:11px">{{ l.license_number|default:"—" }}</span></td>
+          <td class="text-muted fs-12">{{ l.holder|default:"—" }}</td>
+          <td class="fw-600 fs-12" style="color:{% if l.days_to_expiry <= 7 %}var(--danger){% else %}var(--warning){% endif %}">{{ l.expiry_date|date:"d M Y" }}</td>
+          <td><span class="badge badge-{% if l.days_to_expiry <= 7 %}rejected{% else %}hod{% endif %}">{{ l.days_to_expiry }}d</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

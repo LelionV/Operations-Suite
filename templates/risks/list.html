@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Risk Register{% endblock %}
+{% block topbar_title %}<i class="bi bi-exclamation-triangle" style="color:var(--brand);margin-right:6px"></i>Risk Register{% endblock %}
+{% block topbar_actions %}<a href="new/" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add New</a>{% endblock %}
+{% block content %}
+<div class="card mb-16"><div class="card-body" style="padding:12px 18px">
+  <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <div class="input-group" style="max-width:260px">
+      <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search…">
+      <button type="submit" class="btn btn-primary" style="padding:8px 12px"><i class="bi bi-search"></i></button>
+    </div>
+    {% block filters %}{% endblock %}
+    {% if q %}<a href="." class="btn btn-ghost btn-sm"><i class="bi bi-x"></i> Clear</a>{% endif %}
+  </form>
+</div></div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Title</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Level</th><th>Owner</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for item in riskss %}
+        <tr>
+          <td class="fw-600">{{ item.title }}</td>
+          <td class="fs-12">{{ item.get_likelihood_display }}</td>
+          <td class="fs-12">{{ item.get_impact_display }}</td>
+          <td class="fw-600 center">{{ item.risk_score }}</td>
+          <td class=""><span class="badge badge-{{ item.risk_css }}">{{ item.risk_rating }}</span></td>
+          <td class="text-muted fs-12">{{ item.owner.get_full_name|default:"—" }}</td>
+          <td class=""><span class="badge badge-{{ item.status_css }}">{{ item.status }}</span></td>
+          <td><a href="{{ item.pk }}/edit/" class="btn btn-outline btn-sm py-0">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-icon"><i class="bi bi-exclamation-triangle"></i></div><p>No records found.</p><a href="new/" class="btn btn-primary btn-sm">Add First</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Prev</a>{% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Stores{% endblock %}
+{% block topbar_title %}Stores Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-3 mb-24" style="gap:16px">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fef3c7"><i class="bi bi-inbox" style="color:#92400e"></i></div>
+    <div class="stat-label">Awaiting Receipt</div>
+    <div class="stat-value">{{ pending|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--warn-light)"><i class="bi bi-hourglass-split" style="color:var(--warn)"></i></div>
+    <div class="stat-label">Partial GRNs</div>
+    <div class="stat-value">{{ partial|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--accent-light)"><i class="bi bi-bag-check" style="color:var(--accent)"></i></div>
+    <div class="stat-label">Fully Received</div>
+    <div class="stat-value">{{ completed|length }}</div>
+  </div>
+</div>
+
+<div class="card mb-16">
+  <div class="card-header">
+    <span class="card-title">Orders Awaiting Receipt</span>
+    <span class="badge badge-hod">{{ pending|length }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>PO Number</th><th>Title</th><th>Department</th><th>Requester</th>
+            <th class="center">Items</th><th class="num">Total</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for po in pending %}
+        <tr>
+          <td><span class="code">{{ po.po_number }}</span></td>
+          <td class="fw-600">{{ po.title }}</td>
+          <td class="text-muted fs-12">{{ po.department.name }}</td>
+          <td class="text-muted fs-12">{{ po.requester.get_full_name }}</td>
+          <td class="center"><span class="tag">{{ po.active_line_items.count }}</span></td>
+          <td class="num text-muted fs-12">{{ po.total_amount|floatformat:2 }}</td>
+          <td>
+            <a href="{% url 'stores:grn_create' po.pk %}" class="btn btn-success btn-sm">
+              <i class="bi bi-plus"></i> Create GRN
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">
+          <div class="empty-state"><div class="empty-icon"><i class="bi bi-inbox"></i></div>
+            <p>No orders awaiting receipt.</p></div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if partial %}
+<div class="card mb-16">
+  <div class="card-header"><span class="card-title">Partial Receipts — Update When Remainder Arrives</span></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>GRN</th><th>PO</th><th>Department</th><th>Received</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for grn in partial %}
+        <tr>
+          <td><span class="code">{{ grn.grn_number }}</span></td>
+          <td class="text-muted fs-12">{{ grn.purchase_order.po_number }}</td>
+          <td class="text-muted fs-12">{{ grn.purchase_order.department.name }}</td>
+          <td class="text-muted fs-12">{{ grn.received_at|date:"d M Y" }}</td>
+          <td style="display:flex;gap:6px">
+            <a href="{% url 'stores:grn_update' grn.pk %}" class="btn btn-warning btn-sm">Update</a>
+            <a href="{% url 'stores:grn_detail' grn.pk %}" class="btn btn-outline btn-sm">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if completed %}
+<div class="card">
+  <div class="card-header"><span class="card-title">Recently Completed</span>
+    <a href="{% url 'stores:received_list' %}" class="btn btn-outline btn-sm">View All</a>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>GRN</th><th>PO</th><th>Department</th><th>Received By</th><th>Date</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for grn in completed %}
+        <tr>
+          <td><span class="code">{{ grn.grn_number }}</span></td>
+          <td class="text-muted fs-12">{{ grn.purchase_order.po_number }}</td>
+          <td class="text-muted fs-12">{{ grn.purchase_order.department.name }}</td>
+          <td class="text-muted fs-12">{{ grn.received_by.get_full_name }}</td>
+          <td class="text-muted fs-12">{{ grn.received_at|date:"d M Y" }}</td>
+          <td><a href="{% url 'stores:grn_detail' grn.pk %}" class="btn btn-outline btn-sm">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

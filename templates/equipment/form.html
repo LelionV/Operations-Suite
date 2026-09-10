@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}<a href="{% url "equipment:list" %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger mb-16"><i class="bi bi-exclamation-circle"></i><span>{{ form.non_field_errors }}</span></div>{% endif %}
+  <div class="grid grid-main">
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Equipment Register Details</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.asset_id.label }}</label>
+            {{ form.asset_id }}
+            {% if form.asset_id.errors %}<div class="form-error">{{ form.asset_id.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="form-error">{{ form.name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.category.label }}</label>
+            {{ form.category }}
+            {% if form.category.errors %}<div class="form-error">{{ form.category.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.make.label }}</label>
+            {{ form.make }}
+            {% if form.make.errors %}<div class="form-error">{{ form.make.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.model_number.label }}</label>
+            {{ form.model_number }}
+            {% if form.model_number.errors %}<div class="form-error">{{ form.model_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.serial_number.label }}</label>
+            {{ form.serial_number }}
+            {% if form.serial_number.errors %}<div class="form-error">{{ form.serial_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.location.label }}</label>
+            {{ form.location }}
+            {% if form.location.errors %}<div class="form-error">{{ form.location.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.department.label }}</label>
+            {{ form.department }}
+            {% if form.department.errors %}<div class="form-error">{{ form.department.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.site.label }}</label>
+            {{ form.site }}
+            {% if form.site.errors %}<div class="form-error">{{ form.site.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+      <a href="{% url "equipment:list" %}" class="btn btn-ghost" style="margin-left:8px">Cancel</a>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Additional Fields</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.responsible_person.label }}</label>
+            {{ form.responsible_person }}
+            {% if form.responsible_person.errors %}<div class="form-error">{{ form.responsible_person.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="form-error">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.condition.label }}</label>
+            {{ form.condition }}
+            {% if form.condition.errors %}<div class="form-error">{{ form.condition.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.purchase_date.label }}</label>
+            {{ form.purchase_date }}
+            {% if form.purchase_date.errors %}<div class="form-error">{{ form.purchase_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.purchase_cost.label }}</label>
+            {{ form.purchase_cost }}
+            {% if form.purchase_cost.errors %}<div class="form-error">{{ form.purchase_cost.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.warranty_expiry.label }}</label>
+            {{ form.warranty_expiry }}
+            {% if form.warranty_expiry.errors %}<div class="form-error">{{ form.warranty_expiry.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.next_inspection.label }}</label>
+            {{ form.next_inspection }}
+            {% if form.next_inspection.errors %}<div class="form-error">{{ form.next_inspection.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.next_maintenance.label }}</label>
+            {{ form.next_maintenance }}
+            {% if form.next_maintenance.errors %}<div class="form-error">{{ form.next_maintenance.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.calibration_due.label }}</label>
+            {{ form.calibration_due }}
+            {% if form.calibration_due.errors %}<div class="form-error">{{ form.calibration_due.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.is_safety_critical.label }}</label>
+            {{ form.is_safety_critical }}
+            {% if form.is_safety_critical.errors %}<div class="form-error">{{ form.is_safety_critical.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="form-error">{{ form.notes.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

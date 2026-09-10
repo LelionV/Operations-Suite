@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Upload QB Items{% endblock %}
+{% block topbar_title %}
+  <a href="{% url 'inventory:item_list' %}" class="btn btn-ghost btn-sm" style="margin-right:4px">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  Upload QB Items
+{% endblock %}
+
+{% block content %}
+<div style="max-width:640px">
+  <div class="card mb-16">
+    <div class="card-header"><span class="card-title">Upload QuickBooks Items File</span></div>
+    <div class="card-body">
+      <p class="text-muted fs-13 mb-16">
+        Upload a <strong>CSV</strong> or <strong>XLSX</strong> file exported from QuickBooks.
+        Required columns: <code>Code</code>, <code>Description</code>, <code>UOM</code>.
+        Existing items are updated (upsert) — no duplicates created.
+      </p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">File <span class="req">*</span></label>
+          {{ form.file }}
+          <div class="form-hint">Accepted formats: .csv, .xlsx</div>
+        </div>
+        <div class="d-flex gap-12">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Import Items
+          </button>
+          <a href="{% url 'inventory:item_list' %}" class="btn btn-ghost">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#e0e7ff">
+    <div class="card-body" style="background:#f5f7ff;border-radius:var(--radius-lg)">
+      <div class="fw-600 mb-8" style="color:var(--brand)">
+        <i class="bi bi-table" style="margin-right:6px"></i>Expected File Format
+      </div>
+      <p class="text-muted fs-12 mb-8">Column names are flexible — common aliases are recognised automatically.</p>
+      <table class="data-table" style="background:#fff;border-radius:6px;overflow:hidden">
+        <thead>
+          <tr><th>Code</th><th>Description</th><th>UOM</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="code" style="font-size:12px">ITEM-001</td><td>Office Paper A4 80gsm</td><td>Ream</td></tr>
+          <tr><td class="code" style="font-size:12px">ITEM-002</td><td>Ballpoint Pens Blue Box</td><td>Box</td></tr>
+          <tr><td class="code" style="font-size:12px">ITEM-003</td><td>Heavy Duty Stapler</td><td>Each</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

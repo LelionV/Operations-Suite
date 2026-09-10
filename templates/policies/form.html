@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block topbar_title %}<a href="{% url "policies:list" %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{{ page_title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger mb-16"><i class="bi bi-exclamation-circle"></i><span>{{ form.non_field_errors }}</span></div>{% endif %}
+  <div class="grid grid-main">
+    <div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Policies & SOPs Details</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.doc_number.label }}</label>
+            {{ form.doc_number }}
+            {% if form.doc_number.errors %}<div class="form-error">{{ form.doc_number.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.doc_type.label }}</label>
+            {{ form.doc_type }}
+            {% if form.doc_type.errors %}<div class="form-error">{{ form.doc_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.version.label }}</label>
+            {{ form.version }}
+            {% if form.version.errors %}<div class="form-error">{{ form.version.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="form-error">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.review_date.label }}</label>
+            {{ form.review_date }}
+            {% if form.review_date.errors %}<div class="form-error">{{ form.review_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.expiry_date.label }}</label>
+            {{ form.expiry_date }}
+            {% if form.expiry_date.errors %}<div class="form-error">{{ form.expiry_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.requires_acknowledgement.label }}</label>
+            {{ form.requires_acknowledgement }}
+            {% if form.requires_acknowledgement.errors %}<div class="form-error">{{ form.requires_acknowledgement.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Save</button>
+      <a href="{% url "policies:list" %}" class="btn btn-ghost" style="margin-left:8px">Cancel</a>
+    </div>
+    <div>
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header"><span class="card-title">Additional Fields</span></div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">{{ form.approved_by.label }}</label>
+            {{ form.approved_by }}
+            {% if form.approved_by.errors %}<div class="form-error">{{ form.approved_by.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.departments.label }}</label>
+            {{ form.departments }}
+            {% if form.departments.errors %}<div class="form-error">{{ form.departments.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ form.file.label }}</label>
+            {{ form.file }}
+            {% if form.file.errors %}<div class="form-error">{{ form.file.errors.0 }}</div>{% endif %}
+          </div></div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

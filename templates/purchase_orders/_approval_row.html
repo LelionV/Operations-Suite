@@ -1,0 +1,13 @@
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)">
+  <span class="text-sm font-semibold">{{ label }}</span>
+  {% if approver %}
+    <div style="text-align:right">
+      <div class="text-sm" style="color:var(--success)">
+        <i class="bi bi-check-circle-fill"></i> {{ approver.get_full_name }}{% if auto %} <span class="text-xs text-muted">(auto)</span>{% endif %}
+      </div>
+      {% if at %}<div class="text-xs text-muted">{{ at|date:"d M Y H:i" }}</div>{% endif %}
+    </div>
+  {% else %}
+    <span class="text-muted text-sm">—</span>
+  {% endif %}
+</div>

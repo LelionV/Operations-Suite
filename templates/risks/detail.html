@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}{% block obj_title %}Risk Register{% endblock %}{% endblock %}
+{% block topbar_title %}<a href="{% url "risks:list" %}" class="btn btn-ghost btn-sm" style="margin-right:4px"><i class="bi bi-arrow-left"></i></a>{% block header_title %}Risk Register Detail{% endblock %}{% endblock %}
+{% block topbar_actions %}<a href="edit/" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i> Edit</a>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-body">{% block detail_body %}<p class="text-muted">Detail view — customise as needed.</p>{% endblock %}</div>
+</div>
+{% endblock %}

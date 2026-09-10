@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Compliance Requirements{% endblock %}
+{% block topbar_title %}<i class="bi bi-journal-check" style="color:var(--brand);margin-right:6px"></i>Compliance Requirements{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'compliance:create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add Requirement</a>
+{% endblock %}
+{% block content %}
+<div class="card mb-16">
+  <div class="card-body" style="padding:12px 18px">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="input-group" style="max-width:260px">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search…">
+        <button type="submit" class="btn btn-primary" style="padding:8px 12px"><i class="bi bi-search"></i></button>
+      </div>
+      <select name="cat" class="form-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">All categories</option>
+        {% for v,l in category_choices %}<option value="{{ v }}" {% if cat_f == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+      <select name="status" class="form-select" style="width:auto" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for v,l in status_choices %}<option value="{{ v }}" {% if status_f == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+      {% if q or cat_f or status_f %}<a href="." class="btn btn-ghost btn-sm"><i class="bi bi-x"></i> Clear</a>{% endif %}
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Title</th><th>Reference</th><th>Category</th><th>Owner</th><th>Status</th><th>Review Date</th><th></th></tr></thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td class="fw-600 fs-13">{{ item.title|truncatechars:50 }}</td>
+          <td><span class="code" style="font-size:11px">{{ item.reference|default:"—" }}</span></td>
+          <td class="text-muted fs-12">{{ item.get_category_display }}</td>
+          <td class="text-muted fs-12">{{ item.owner.get_full_name|default:"—" }}</td>
+          <td><span class="badge badge-{{ item.status_css }}" style="font-size:10px">{{ item.get_status_display }}</span></td>
+          <td class="text-muted fs-12">{{ item.review_date|date:"d M Y"|default:"—" }}</td>
+          <td style="display:flex;gap:4px">
+            <a href="{% url 'compliance:detail' item.pk %}" class="btn btn-ghost btn-sm py-0">View</a>
+            <a href="{% url 'compliance:edit' item.pk %}" class="btn btn-outline btn-sm py-0">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bi bi-journal-check"></i></div><p>No requirements found.</p><a href="{% url 'compliance:create' %}" class="btn btn-primary btn-sm">Add First</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Prev</a>{% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
